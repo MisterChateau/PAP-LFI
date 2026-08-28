@@ -1,51 +1,25 @@
 /**
- * PAP-LFI — Couche base de données (SQLite)
+ * PAP-LFI — Couche base de données Supabase
  * 
- * Tables :
- * - actions : les campagnes de porte-à-porte créées par les organisateurs
+ * Tables (à créer dans Supabase) :
+ * - actions : les campagnes de porte-à-porte
  * - doors : chaque porte visitée (données chiffrées)
+ * 
+ * Les données sont chiffrées côté application (AES-256-GCM) avant stockage,
+ * donc même si la BDD Supabase est compromise, tout reste illisible.
  */
 
-const Database = require('better-sqlite3');
-const path = require('path');
-const fs = require('fs');
+const { createClient } = require('@supabase/supabase-js');
 
-const DB_PATH = path.join(__dirname, '..', 'data', 'pap.db');
+// Les identifiants viennent des variables d'environnement (configurées sur Render)
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_KEY = process.env.SUPABASE_ANON_KEY;
 
-// S'assurer que le dossier data existe
-if (!fs.existsSync(path.dirname(DB_PATH))) {
-  fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
+if (!SUPABASE_URL || !SUPABASE_KEY) {
+  console.error('❌ Variables SUPABASE_URL et SUPABASE_ANON_KEY requises.');
+  console.error('   Configurez-les dans votre plateforme d\'hébergement ou un fichier .env');
 }
 
-const db = new Database(DB_PATH);
+const supabase = createClient(SUPABASE_URL || '', SUPABASE_KEY || '');
 
-// Activer les clés étrangères et WAL pour la robustesse
-db.pragma('journal_mode = WAL');
-db.pragma('foreign_keys = ON');
-
-// --- Schéma ---
-db.exec(`
-  CREATE TABLE IF NOT EXISTS actions (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,               -- nom de l'action (ex: "Porte-à-porte Quartier Nord")
-    master_key_hash TEXT NOT NULL,    -- hash SHA-256 de la clé maître créateur
-    created_at TEXT DEFAULT (datetime('now'))
-  );
-
-  CREATE TABLE IF NOT EXISTS doors (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    action_id INTEGER NOT NULL,
-    team_hash TEXT NOT NULL,          -- hash du code d'équipe (pour identifier la source)
-    building TEXT,                    -- nom/rue de l'immeuble (chiffré)
-    floor TEXT,                       -- étage (chiffré)
-    door_number TEXT,                 -- numéro de porte (chiffré)
-    interaction TEXT,                 -- type d'interaction (chiffré)
-    details TEXT,                     -- notes/détails (chiffré)
-    created_at TEXT DEFAULT (datetime('now')),
-    FOREIGN KEY (action_id) REFERENCES actions(id) ON DELETE CASCADE
-  );
-
-  CREATE INDEX IF NOT EXISTS idx_doors_action ON doors(action_id);
-`);
-
-module.exports = db;
+module.exports = supabase;

@@ -1,7 +1,7 @@
 {
   "name": "pap-lfi",
   "version": "1.0.0",
-  "description": "Application de porte-à-porte LFI - saisie mobile + compilation centralisée",
+  "description": "Application de porte-à-porte LFI - saisie mobile + compilation centralisée, données chiffrées",
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
@@ -11,7 +11,7 @@
     "node": ">=18"
   },
   "dependencies": {
-    "express": "^4.19.2",
-    "better-sqlite3": "^11.3.0"
+    "@supabase/supabase-js": "^2.45.0",
+    "express": "^4.19.2"
   }
 }

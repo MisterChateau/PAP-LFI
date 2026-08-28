@@ -10,9 +10,9 @@ Aujourd'hui, le porte-à-porte se fait sur **papier** : chaque équipe note éta
 ## Fonctionnalités
 - 📱 **Saisie mobile ultra-rapide** : gros boutons, peu de champs, pensée pour le terrain
 - 🚪 Chaque porte : étage, numéro, immeuble, type d'interaction, notes
-- 🔐 **Chiffrement AES-256-GCM** : les données sont chiffrées avec le code d'équipe, la clé maître du créateur peut tout déchiffrer
+- 🔐 **Chiffrement AES-256-GCM** : les données sont chiffrées avec la clé maître, illisibles même si la BDD est volée
 - 📊 **Compilation automatique** : tableau + export CSV pour le créateur
-- 🕵️ **Anonymat des militants** : pas de compte, pas d'info perso, juste un code d'équipe
+- 🕵️ **Anonymat des militants** : pas de compte, pas d'info perso, juste un code d'équipe (hashé)
 
 ## Types d'interaction
 | Code | Libellé |
@@ -26,30 +26,46 @@ Aujourd'hui, le porte-à-porte se fait sur **papier** : chaque équipe note éta
 | `ne-sonne-pas` | ♿ Ne sonne pas |
 
 ## Sécurité
-- **Chiffrement de bout en bout** : les données stockées dans la BDD sont illisibles sans la clé
-- **Clé maître créateur** : dérive une clé AES-256 via PBKDF2 (100 000 itérations)
+- **Chiffrement de bout en bout** : les données sont chiffrées (AES-256-GCM, clé dérivée PBKDF2) avant stockage dans la BDD
+- **Clé maître créateur** : seule clé capable de déchiffrer toutes les données
 - **Codes d'équipe** : hashés (SHA-256), jamais stockés en clair
-- **Même si la base est volée, rien n'est exploitable** sans les clés
+- **Même si la base Supabase est compromise, rien n'est exploitable** sans la clé maître
 
 ## Techno
 - **Back** : Node.js + Express
-- **BDD** : SQLite (better-sqlite3) — aucun service externe, gratuit
+- **BDD** : **Supabase** (PostgreSQL hébergé, gratuit + persistant)
 - **Front** : HTML/JS vanilla, mobile-first (aucun framework lourd)
+- **Hébergement** : Render (gratuit)
 
 ## Installation locale
 ```bash
 npm install
-npm start
+
+# Créer un fichier .env avec :
+# SUPABASE_URL=https://VOTRE-PROJET.supabase.co
+# SUPABASE_ANON_KEY=votre-clé-anon
+
+npm start   # ou : npm run dev
 # → http://localhost:3000
 ```
+
+## Configuration Supabase
+1. Créez un projet sur [supabase.com](https://supabase.com) (gratuit)
+2. Dans le **SQL Editor**, exécutez le contenu de `supabase_schema.sql`
+3. Récupérez dans **Settings → API** : l'URL et la clé `anon public`
+4. Configurez ces valeurs en variables d'environnement (`SUPABASE_URL`, `SUPABASE_ANON_KEY`)
+
+## Déploiement Render
+1. Connectez votre repo GitHub `MisterChateau/PAP-LFI` sur Render
+2. Render détecte `render.yaml` (Blueprint) → déploie `pap-lfi`
+3. Dans le Dashboard Render → Service → Environment, ajoutez :
+   - `SUPABASE_URL`
+   - `SUPABASE_ANON_KEY`
 
 ## Utilisation
 1. **Créateur** : entre un nom d'action + crée une **clé maître** + un code équipe → obtient un lien à partager
 2. **Équipes** : ouvrent le lien, entrent leur **code d'équipe**, et saisissent les portes
 3. **Créateur** : avec sa clé maître, consulte la compilation et exporte en CSV
-
-## Déploiement
-Déployable gratuitement sur **Render**, **Railway**, ou **Fly.io** (un seul service Node).
 
 ---
 *Fait avec ✊ pour les camarades de terrain.*

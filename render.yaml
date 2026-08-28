@@ -10,3 +10,8 @@ services:
     envVars:
       - key: NODE_VERSION
         value: 18
+      # ⚠️ À renseigner dans le Dashboard Render (Service → Environment)
+      # - key: SUPABASE_URL
+      #   value: https://VOTRE-PROJET.supabase.co
+      # - key: SUPABASE_ANON_KEY
+      #   value: votre-clé-anon
