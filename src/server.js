@@ -13,6 +13,7 @@
 
 const express = require('express');
 const path = require('path');
+const crypto = require('crypto');
 const supabase = require('./db');
 const { encrypt, decrypt, hashSecret } = require('./crypto');
 const { createToken, decodeToken } = require('./link');
@@ -56,19 +57,25 @@ function isValidUUID(v) { return typeof v === 'string' && UUID_RE.test(v); }
 /**
  * POST /api/actions
  * Créer une nouvelle action de porte-à-porte.
- * Body : { name: string, masterKey: string }
- * Retourne l'UUID de l'action + le lien à partager.
+ * Body : { name: string }
+ * La clé de chiffrement est GÉNÉRÉE automatiquement par le serveur
+ * (l'utilisateur n'a plus à en saisir une). Elle est embarquée dans le
+ * lien opaque /r/<token> ; aucune clé à retenir côté utilisateur.
+ * Retourne l'UUID de l'action + le lien opaque à partager.
  */
 app.post('/api/actions', async (req, res) => {
   try {
-    const { name, masterKey } = req.body || {};
-    if (!name || !masterKey || masterKey.length < 4) {
-      return res.status(400).json({ error: 'Le nom et une clé maître (min 4 caractères) sont requis.' });
+    const { name } = req.body || {};
+    if (!name || !name.trim()) {
+      return res.status(400).json({ error: 'Le nom de l\'action est requis.' });
     }
+
+    // Générer une clé de chiffrement aléatoire forte (32 octets → hex)
+    const masterKey = crypto.randomBytes(32).toString('hex');
 
     const { data, error } = await supabase
       .from('actions')
-      .insert({ name, master_key_hash: hashSecret(masterKey) })
+      .insert({ name: name.trim(), master_key_hash: hashSecret(masterKey) })
       .select()
       .single();
 

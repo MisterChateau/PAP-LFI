@@ -236,10 +236,8 @@
       <h2>➕ Créer une action</h2>
       <label>Nom de l'action</label>
       <input type="text" id="actionName" placeholder="Ex : Porte-à-porte Quartier Nord" autocomplete="off">
-      <label>Clé de chiffrement (secrète)</label>
-      <input type="password" id="masterKey" placeholder="Choisissez une clé (min 4 car.)" autocomplete="off">
       <p class="muted" style="margin-bottom:16px">
-        Cette clé est embarquée dans le lien. Toute personne ayant le lien peut saisir et voir les résultats.
+        Une clé de chiffrement sécurisée est générée automatiquement. Toute personne ayant le lien peut saisir et voir les résultats.
       </p>
       <button class="btn green" onclick="createAction()">Créer l'action</button>
       <div id="createResult"></div>
@@ -351,16 +349,15 @@
     // --- CRÉER UNE ACTION ---
     async function createAction() {
       const name = document.getElementById('actionName').value.trim();
-      const masterKey = document.getElementById('masterKey').value.trim();
       const resEl = document.getElementById('createResult');
-      if (!name || !masterKey || masterKey.length < 4) {
-        resEl.innerHTML = '<div class="status error">Renseignez le nom et une clé (min 4 caractères).</div>';
+      if (!name) {
+        resEl.innerHTML = '<div class="status error">Renseignez le nom de l\'action.</div>';
         return;
       }
       try {
         const r = await fetch('/api/actions', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, masterKey })
+          body: JSON.stringify({ name })
         });
         const d = await r.json();
         if (!r.ok) throw new Error(d.error || 'Erreur');

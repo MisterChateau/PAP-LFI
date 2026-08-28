@@ -63,15 +63,16 @@ npm start   # ou : npm run dev
    - `SUPABASE_ANON_KEY`
 
 ## Utilisation
-1. **Créateur** : entre un nom d'action + une clé de chiffrement → obtient un **lien opaque** `/r/<token>` à partager
-2. **Équipes** : ouvrent le lien → arrivent **directement sur la saisie + compilation** (aucun UUID visible dans l'URL)
+1. **Créateur** : entre un **nom d'action** → obtient un **lien opaque** `/r/<token>` à partager
+2. **Équipes** : ouvrent le lien → arrivent **directement sur la saisie + compilation** (aucun UUID ni clé visible dans l'URL)
 3. **Exit** : bouton dans la barre noire pour revenir à l'écran "Créer une action"
 
-> 🔑 **Modèle d'accès** : le lien `/r/<token>` **est l'accès**. L'UUID et la clé sont chiffrés dans le token (secret serveur `APP_SECRET`) et ne sont **jamais exposés dans l'URL**. Quiconque détient le lien peut saisir et consulter. Un champ **équipe optionnel** (ex : A3) permet de tracer qui a saisi quoi.
+> 🔑 **Aucune clé à retenir** : la clé de chiffrement est **générée automatiquement** par le serveur (aléatoire, 64 caractères) et embarquée dans le lien opaque. L'utilisateur ne saisit que le nom de l'action.
 
 ## Sécurité du lien
 - Le lien opaque `/r/<token>` contient l'UUID + la clé **chiffrés** avec le secret serveur (`APP_SECRET`)
 - L'UUID et la clé ne sont **jamais visibles dans l'URL**
+- La clé aléatoire est générée par le serveur, elle n'est jamais renvoyée en clair au navigateur (seulement dans le token)
 - `APP_SECRET` doit être une longue chaîne aléatoire (voir `.env.example`)
 - Les données restent chiffrées AES-256 en BDD même si le serveur est compromis
 
