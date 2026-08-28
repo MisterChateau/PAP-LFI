@@ -5,16 +5,23 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>✊ Porte-à-Porte — La France Insoumise</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
   <style>
     :root {
-      --lfi-red: #E1000F;
-      --lfi-red-dark: #b3000c;
+      --lfi-red: #E1000F;           /* rouge LFI officiel */
+      --lfi-red-deep: #B3000C;
+      --lfi-red-soft: #FDE8E7;
+      --lfi-violet: #4C0297;        /* violet LFI officiel (logo charte) */
+      --lfi-violet-deep: #3A0273;
+      --lfi-violet-soft: #EFE6FB;
       --lfi-black: #101014;
-      --lfi-white: #ffffff;
-      --lfi-cream: #f7f5f0;
-      --lfi-gray: #6b6b6b;
-      --lfi-border: #e8e5df;
+      --lfi-dark: #1A1A20;
+      --lfi-cream: #F7F4EF;
+      --lfi-white: #FFFFFF;
+      --lfi-gray: #6B6B6B;
+      --lfi-border: #E7E3DC;
+      --lfi-gold: #F2C230;
+      --lfi-green: #2E8B57;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
     html { scroll-behavior: smooth; }
@@ -24,68 +31,78 @@
       min-height: 100vh; padding-bottom: 90px;
     }
 
-    /* ===== HÉRO / BANDEAU ===== */
+    /* ===== HÉRO (dégradé rouge → violet) ===== */
     .hero {
-      background: var(--lfi-red); color: #fff;
-      padding: 22px 20px 0; text-align: center; position: relative;
+      background: linear-gradient(135deg, var(--lfi-red) 0%, var(--lfi-violet) 100%);
+      color: #fff; padding: 28px 20px 0; text-align: center; position: relative; overflow: hidden;
     }
-    .hero-top { display: flex; align-items: center; justify-content: center; gap: 10px; padding-bottom: 16px; }
+    .hero::before {
+      content: '✊'; position: absolute; right: -25px; top: -20px;
+      font-size: 160px; opacity: .14; transform: rotate(-12deg);
+    }
+    .hero-top { display: flex; align-items: center; justify-content: center; gap: 12px; padding-bottom: 4px; position: relative; z-index: 1; }
+    /* Mascotte tortue LFI (remplace le logo ✊) */
+    .hero-tortue {
+      width: 40px; height: 40px; border-radius: 50%; object-fit: cover;
+      border: 3px solid #fff; box-shadow: 0 2px 8px rgba(0,0,0,.25);
+    }
+    .hero-title-wrap { position: relative; z-index: 1; }
     .hero-logo {
-      width: 34px; height: 34px; background: #fff; color: var(--lfi-red);
-      border-radius: 8px; display: flex; align-items: center; justify-content: center;
-      font-weight: 800; font-size: 1.1rem;
+      width: 38px; height: 38px; background: #fff; color: var(--lfi-red);
+      border-radius: 9px; display: flex; align-items: center; justify-content: center;
+      font-weight: 900; font-size: 1.15rem; box-shadow: 0 2px 8px rgba(0,0,0,.2);
     }
     .hero-kicker {
-      text-transform: uppercase; letter-spacing: 3px; font-size: .62rem;
-      font-weight: 800; opacity: .92;
+      text-transform: uppercase; letter-spacing: 3px; font-size: .6rem;
+      font-weight: 800; opacity: .95;
     }
     .hero h1 {
       font-family: 'Anton', sans-serif; font-weight: 400;
-      font-size: 2.6rem; letter-spacing: 1px; text-transform: uppercase;
-      line-height: .92; margin-top: 6px;
+      font-size: 2.9rem; letter-spacing: 1.5px; text-transform: uppercase;
+      line-height: .9; position: relative; z-index: 1; text-shadow: 0 2px 12px rgba(0,0,0,.2);
     }
     .hero .hero-sub {
-      font-size: .8rem; opacity: .95; font-weight: 600;
-      padding: 12px 0 18px;
+      font-size: .82rem; opacity: .95; font-weight: 700;
+      padding: 12px 0 20px; position: relative; z-index: 1;
     }
-    /* Vague bas du héros */
-    .hero-wave { width: 100%; display: block; line-height: 0; }
-    .hero-wave svg { width: 100%; height: 34px; display: block; }
+    .hero-wave { width: 100vw; display: block; line-height: 0; position: relative; left: 50%; right: 50%; margin-left: -50vw; margin-right: -50vw; z-index: 1; }
+    .hero-wave svg { width: 100%; height: 40px; display: block; }
 
     /* ===== BARRE ACTION (lien ouvert) ===== */
     .action-bar {
       display: flex; align-items: center; justify-content: space-between;
       background: var(--lfi-black); color: #fff; padding: 11px 16px; gap: 10px;
-      position: sticky; top: 0; z-index: 50;
+      position: sticky; top: 0; z-index: 50; border-bottom: 3px solid var(--lfi-red);
     }
-    .action-bar .name { font-weight: 700; font-size: .88rem; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .action-bar .name { font-weight: 700; font-size: .88rem; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #fff; }
+    .action-bar .name .dot { color: var(--lfi-red); }
     .exit-btn {
-      background: transparent; color: #fff; border: 1px solid rgba(255,255,255,.5);
-      padding: 6px 13px; border-radius: 8px; font-weight: 700; font-size: .78rem;
+      background: var(--lfi-red); color: #fff; border: none;
+      padding: 7px 14px; border-radius: 8px; font-weight: 800; font-size: .78rem;
       cursor: pointer; text-transform: uppercase; letter-spacing: .5px;
     }
-    .exit-btn:hover { background: rgba(255,255,255,.15); }
+    .exit-btn:hover { background: var(--lfi-red-deep); }
 
-    .container { max-width: 600px; margin: 0 auto; padding: 20px 18px; }
+    .container { max-width: 600px; margin: 0 auto; padding: 22px 18px; }
 
     /* ===== CARTES ===== */
     .card {
-      background: #fff; border: 1px solid var(--lfi-border); border-radius: 18px;
-      padding: 22px; margin-bottom: 16px;
-      box-shadow: 0 2px 10px rgba(0,0,0,.05);
+      background: #fff; border: 1px solid var(--lfi-border); border-radius: 20px;
+      padding: 24px; margin-bottom: 18px;
+      box-shadow: 0 4px 16px rgba(0,0,0,.06);
     }
     h2 {
       font-family: 'Anton', sans-serif; font-weight: 400; text-transform: uppercase;
-      font-size: 1.2rem; letter-spacing: .5px; margin-bottom: 18px; color: var(--lfi-black);
+      font-size: 1.3rem; letter-spacing: 1px; margin-bottom: 18px; color: var(--lfi-black);
     }
     .section-tag {
       display: inline-block; background: var(--lfi-red); color: #fff;
-      font-size: .62rem; font-weight: 800; letter-spacing: 2px;
+      font-size: .6rem; font-weight: 800; letter-spacing: 2.5px;
       padding: 4px 12px; border-radius: 3px; text-transform: uppercase; margin-bottom: 12px;
     }
 
     /* ===== FORMULAIRE ===== */
-    label { display: block; font-size: .76rem; font-weight: 800; margin-bottom: 6px; color: #444; text-transform: uppercase; letter-spacing: .8px; }
+    label { display: block; font-size: .74rem; font-weight: 800; margin-bottom: 6px; color: #555; text-transform: uppercase; letter-spacing: 1px; }
     input, select, textarea {
       width: 100%; padding: 15px 14px; border: 2px solid var(--lfi-border); border-radius: 12px;
       font-size: 1rem; margin-bottom: 16px; background: var(--lfi-cream); font-family: 'Inter', sans-serif;
@@ -102,58 +119,73 @@
       font-size: .98rem; font-weight: 800; cursor: pointer; letter-spacing: 1px;
       background: var(--lfi-red); color: #fff; text-transform: uppercase;
       transition: transform .1s, opacity .2s, background .15s; font-family: 'Inter', sans-serif;
+      box-shadow: 0 3px 10px rgba(225,0,15,.2);
     }
     .btn:active { transform: scale(.97); }
-    .btn:hover { background: var(--lfi-red-dark); }
-    .btn.secondary { background: var(--lfi-black); }
+    .btn:hover { background: var(--lfi-red-deep); }
+    .btn.secondary { background: var(--lfi-black); box-shadow: 0 3px 10px rgba(16,16,20,.2); }
     .btn.secondary:hover { background: #2a2a30; }
-    .btn.green { background: #1a8a3a; }
-    .btn.green:hover { background: #157030; }
+    .btn.violet { background: var(--lfi-violet); box-shadow: 0 3px 10px rgba(76,2,151,.35); }
+    .btn.violet:hover { background: var(--lfi-violet-deep); }
+    .btn.green { background: var(--lfi-green); box-shadow: 0 3px 10px rgba(46,139,87,.25); }
+    .btn.green:hover { background: #23704a; }
     .btn:disabled { opacity: .5; cursor: not-allowed; }
     .btn.small { padding: 12px; font-size: .8rem; border-radius: 10px; }
 
-    /* Bouton "créer une action" / appel */
+    /* CTA créer une action */
     .cta {
-      width: 100%; padding: 26px; border: 3px solid var(--lfi-red); border-radius: 18px;
-      background: var(--lfi-red); color: #fff; font-weight: 800; font-size: 1.25rem;
-      cursor: pointer; text-align: center; margin-bottom: 16px; transition: all .15s;
-      font-family: 'Anton', sans-serif; text-transform: uppercase; letter-spacing: 1.5px;
-      box-shadow: 0 4px 14px rgba(225,0,15,.3);
+      width: 100%; padding: 28px; border: 3px solid var(--lfi-red); border-radius: 20px;
+      background: var(--lfi-red); color: #fff; font-weight: 800; font-size: 1.3rem;
+      cursor: pointer; text-align: center; margin-bottom: 18px; transition: all .15s;
+      font-family: 'Anton', sans-serif; text-transform: uppercase; letter-spacing: 2px;
+      box-shadow: 0 6px 20px rgba(225,0,15,.35);
     }
-    .cta .sub { display:block; font-family:'Inter',sans-serif; font-size:.78rem; font-weight:600; color: rgba(255,255,255,.9); text-transform:none; letter-spacing:0; margin-top:6px; }
-    .cta:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(225,0,15,.4); }
+    .cta .sub { display:block; font-family:'Inter',sans-serif; font-size:.78rem; font-weight:600; color: rgba(255,255,255,.92); text-transform:none; letter-spacing:0; margin-top:7px; }
+    .cta:hover { transform: translateY(-2px); box-shadow: 0 8px 26px rgba(225,0,15,.45); }
 
-    /* ===== INTERACTIONS ===== */
+    /* ===== BLOC COLORÉ "comment ça marche" (violet) ===== */
+    .how-block {
+      background: linear-gradient(135deg, var(--lfi-violet) 0%, var(--lfi-violet-deep) 100%);
+      color: #fff; border-radius: 20px; padding: 24px;
+      margin-bottom: 18px; position: relative; overflow: hidden; box-shadow: 0 5px 18px rgba(76,2,151,.35);
+    }
+    .how-block::after { content: '✊'; position: absolute; right: -15px; bottom: -25px; font-size: 110px; opacity: .1; transform: rotate(-8deg); }
+    .how-block h3 { font-family:'Anton',sans-serif; font-weight:400; text-transform:uppercase; font-size:1.1rem; letter-spacing:1px; margin-bottom:12px; color: var(--lfi-gold); }
+    .how-block p { font-size:.86rem; line-height:1.5; color: rgba(255,255,255,.9); position: relative; z-index:1; }
+    .how-block .lock { color: var(--lfi-gold); font-weight:700; }
+
+    /* ===== INTERACTIONS (pastilles colorées) ===== */
     .interactions { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 16px; }
     .interaction {
       padding: 15px 8px; border: 2px solid var(--lfi-border); border-radius: 12px; text-align: center;
       cursor: pointer; font-weight: 700; font-size: .84rem; background: #fff; transition: all .15s;
       color: #333;
     }
-    .interaction.selected { border-color: var(--lfi-red); background: #fdeceb; color: var(--lfi-red); box-shadow: 0 0 0 2px rgba(225,0,15,.15); }
+    .interaction.selected { border-color: var(--lfi-red); background: var(--lfi-red-soft); color: var(--lfi-red); box-shadow: 0 0 0 2px rgba(225,0,15,.15); }
 
     /* ===== STATUT ===== */
     .status { text-align: center; padding: 14px; border-radius: 12px; margin-bottom: 14px; font-weight: 700; display: none; font-size: .9rem; }
-    .status.success { background: #e5f4e8; color: #157030; display: block; }
-    .status.error { background: #fdeceb; color: #c62828; display: block; }
+    .status.success { background: #e5f4e8; color: #23704a; display: block; }
+    .status.error { background: var(--lfi-red-soft); color: #c62828; display: block; }
 
-    /* ===== COMPTEUR GIANT (façon 2/150000) ===== */
-    .big-counter {
-      text-align: center; padding: 6px 0 2px;
-    }
-    .big-counter .nums { font-family: 'Anton', sans-serif; font-size: 2.6rem; line-height: 1; color: var(--lfi-black); }
-    .big-counter .nums .slash { color: var(--lfi-red); }
-    .big-counter .label { font-size: .72rem; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; color: var(--lfi-gray); margin-top: 4px; }
+    /* ===== COMPTEUR (violet) ===== */
+    .big-counter { text-align: center; padding: 8px 0 2px; }
+    .big-counter .nums { font-family: 'Anton', sans-serif; font-size: 2.9rem; line-height: 1; color: var(--lfi-violet); }
+    .big-counter .nums .slash { color: var(--lfi-black); }
+    .big-counter .label { font-size: .72rem; font-weight: 800; text-transform: uppercase; letter-spacing: 2.5px; color: var(--lfi-gray); margin-top: 4px; }
+    /* barre de progression rouge→violet */
+    .progress { height: 12px; background: var(--lfi-border); border-radius: 20px; margin: 16px 0 4px; overflow: hidden; }
+    .progress .fill { height: 100%; background: linear-gradient(90deg, var(--lfi-red), var(--lfi-violet)); border-radius: 20px; transition: width .4s ease; }
 
-    /* ===== TABLETTES ===== */
-    .tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+    /* ===== ONGLETS ===== */
+    .tabs { display: flex; gap: 8px; margin-bottom: 18px; }
     .tab {
-      flex: 1; padding: 14px; border: 2px solid var(--lfi-border); border-radius: 12px;
+      flex: 1; padding: 15px; border: 2px solid var(--lfi-border); border-radius: 13px;
       text-align: center; font-weight: 800; font-size: .88rem; cursor: pointer;
       background: #fff; color: var(--lfi-black); text-transform: uppercase; letter-spacing: .5px;
       transition: all .15s;
     }
-    .tab.active { border-color: var(--lfi-red); background: var(--lfi-red); color: #fff; }
+    .tab.active { border-color: var(--lfi-red); background: var(--lfi-red); color: #fff; box-shadow: 0 3px 10px rgba(225,0,15,.2); }
 
     /* ===== LIEN ===== */
     .link-box {
@@ -161,76 +193,80 @@
       border-radius: 12px; word-break: break-all; font-size: .84rem; margin: 14px 0;
       font-family: monospace; color: #333;
     }
-    .copy-btn { background: var(--lfi-black); color:#fff; border:none; padding:12px; border-radius:10px; font-weight:800; cursor:pointer; width:100%; margin-top:6px; text-transform:uppercase; letter-spacing:1px; font-size:.9rem; }
+    .copy-btn { background: var(--lfi-black); color:#fff; border:none; padding:13px; border-radius:11px; font-weight:800; cursor:pointer; width:100%; margin-top:6px; text-transform:uppercase; letter-spacing:1px; font-size:.9rem; }
     .copy-btn:hover { background: #2a2a30; }
 
-    /* ===== TABLE COMPILATION ===== */
-    .table-wrap { overflow-x: auto; border: 1px solid var(--lfi-border); border-radius: 12px; }
+    /* ===== COMPILATION (violet) ===== */
+    .stats-box {
+      background: linear-gradient(135deg, var(--lfi-violet) 0%, var(--lfi-violet-deep) 100%);
+      color:#fff; padding: 22px; border-radius: 16px; margin-bottom: 16px;
+      box-shadow: 0 5px 18px rgba(76,2,151,.35); position: relative; overflow: hidden;
+    }
+    .stats-box::after { content:'📊'; position:absolute; right:12px; bottom:-8px; font-size:70px; opacity:.15; }
+    .stats-box .big { font-family:'Anton',sans-serif; font-size: 2.8rem; line-height:1; }
+    .stats-box .label { font-size:.72rem; opacity:.95; text-transform:uppercase; letter-spacing:2px; font-weight:800; }
+
+    .chip-row { margin-bottom: 14px; }
+    .chip {
+      display:inline-block; background: var(--lfi-violet-soft); color:#3a2360; padding:5px 12px; border-radius:20px;
+      font-size:.76rem; font-weight:700; margin:2px; border:1px solid #d3c9e8;
+    }
+
+    .table-wrap { overflow-x: auto; border: 1px solid var(--lfi-border); border-radius: 14px; }
     table { width: 100%; border-collapse: collapse; font-size: .82rem; }
     th, td { padding: 11px 9px; border-bottom: 1px solid #f0ede7; text-align: left; }
     th { background: var(--lfi-black); color: #fff; position: sticky; top: 0; font-size: .68rem; text-transform: uppercase; letter-spacing: .5px; }
     tr:nth-child(even) { background: #faf9f6; }
 
-    .stats-box { background: var(--lfi-red); color:#fff; padding: 20px; border-radius: 14px; margin-bottom: 14px; box-shadow: 0 3px 12px rgba(225,0,15,.25); }
-    .stats-box .big { font-family:'Anton',sans-serif; font-size: 2.6rem; line-height:1; }
-    .stats-box .label { font-size:.72rem; opacity:.92; text-transform:uppercase; letter-spacing:1.5px; font-weight:800; }
-
-    .chip-row { margin-bottom: 12px; }
-    .chip {
-      display:inline-block; background:#fdeceb; color:#111; padding:4px 11px; border-radius:20px;
-      font-size:.74rem; font-weight:700; margin:2px;
-    }
-
-    .footer-note { text-align: center; font-size: .74rem; color: #a09b92; padding: 16px 10px; }
+    .footer-note { text-align: center; font-size: .74rem; color: #a09b92; padding: 18px 10px; }
     .footer-note .lock { color: var(--lfi-red); font-weight: 700; }
-
     .muted { color: #8a857c; font-size: .85rem; line-height:1.45; }
     .hidden { display: none !important; }
   </style>
 </head>
 <body>
 
-  <!-- HÉRO -->
+  <!-- HÉRO ROUGE -->
   <header class="hero">
     <div class="hero-top">
-      <div class="hero-logo">✊</div>
+      <img src="/tortue.jpg" alt="Mascotte LFI" class="hero-tortue">
       <span class="hero-kicker">La France Insoumise</span>
     </div>
     <h1>Porte-à-Porte</h1>
     <div class="hero-sub">Outil de terrain — saisie militante</div>
     <svg class="hero-wave" viewBox="0 0 600 40" preserveAspectRatio="none">
-      <path d="M0,40 L0,24 C150,6 250,34 400,20 C480,12 540,16 600,18 L600,40 Z" fill="#f7f5f0"/>
+      <path d="M0,40 L0,24 C150,6 250,34 400,20 C480,12 540,16 600,18 L600,40 Z" fill="#F7F4EF"/>
     </svg>
   </header>
 
   <!-- Barre action (lien ouvert) -->
   <div id="action-bar" class="action-bar hidden">
-    <span class="name" id="actionBarName">🚪 Action en cours</span>
+    <span class="name" id="actionBarName"><span class="dot">●</span> Action en cours</span>
     <button class="exit-btn" onclick="exitAction()">✕ Exit</button>
   </div>
 
   <div class="container">
 
-    <!-- VUE : ACCUEIL (créer une action) -->
+    <!-- VUE : ACCUEIL -->
     <div id="view-home" class="hidden">
-      <div style="padding-top:6px">
+      <div style="padding-top:4px">
         <button class="cta" onclick="showCreate()">
           ➕ Créer une action
           <span class="sub">Générez un lien à partager dans votre groupe</span>
         </button>
-      </div>
-      <div class="card" style="text-align:center">
-        <span class="section-tag">Comment ça marche</span>
-        <p class="muted" style="margin-bottom:8px">
-          Créez une action, obtenez un lien secret, partagez-le aux camarades. Ils ouvrent le lien et saisissent les portes directement sur le terrain.
-        </p>
-        <p class="muted">
-          🔒 Toutes les données sont <strong>chiffrées</strong>. L'écran de saisie et les résultats ne s'affichent que via le lien.
-        </p>
+        <div class="how-block">
+          <h3>Comment ça marche</h3>
+          <p>
+            Créez une action, obtenez un lien secret, partagez-le aux camarades. Ils ouvrent le lien et saisissent les portes directement sur le terrain.
+          </p>
+          <p style="margin-top:10px">
+            🔒 Toutes les données sont <span class="lock">chiffrées</span>. Saisie et résultats ne s'affichent que via le lien.
+          </p>
+        </div>
       </div>
     </div>
 
-    <!-- VUE : CRÉER UNE ACTION -->
+    <!-- VUE : CRÉER -->
     <div id="view-create" class="card hidden">
       <span class="section-tag">Nouvelle action</span>
       <h2>➕ Créer une action</h2>
@@ -243,18 +279,19 @@
       <div id="createResult"></div>
     </div>
 
-    <!-- VUE : ACTION OUVERTE (saisie + compilation) -->
+    <!-- VUE : ACTION OUVERTE -->
     <div id="view-action" class="hidden">
       <div class="tabs">
         <div class="tab active" id="tab-saisie" onclick="showTab('saisie')">🚪 Saisir</div>
         <div class="tab" id="tab-compil" onclick="showTab('compil')">📊 Résultats</div>
       </div>
 
-      <!-- SOUS-VUE : SAISIE -->
+      <!-- SAISIE -->
       <div id="sub-saisie">
         <div class="card">
           <div class="big-counter" id="counter"></div>
-          <hr style="border:none;border-top:1px solid var(--lfi-border);margin:16px 0">
+          <div class="progress"><div class="fill" id="progressFill"></div></div>
+          <hr style="border:none;border-top:1px solid var(--lfi-border);margin:18px 0">
           <div class="status" id="status"></div>
           <h2>🚪 Nouvelle porte</h2>
           <div class="row">
@@ -279,7 +316,7 @@
         </div>
       </div>
 
-      <!-- SOUS-VUE : COMPILATION -->
+      <!-- COMPILATION -->
       <div id="sub-compil" class="hidden">
         <div class="card">
           <div id="compilStats"></div>
@@ -315,18 +352,14 @@
       { id: 'refus', label: '🙅 Refus / hostile' },
       { id: 'ne-sonne-pas', label: '♿ Ne sonne pas' }
     ];
+    const PROGRESS_TARGET = 100; // objectif indicatif pour la barre
 
     let state = {
-      actionId: null,
-      cipherKey: '',
-      actionName: '',
-      selectedInteraction: null
+      actionId: null, cipherKey: '', actionName: '', selectedInteraction: null
     };
 
     function show(id) {
-      ['view-home','view-create','view-action'].forEach(v => {
-        document.getElementById(v).classList.add('hidden');
-      });
+      ['view-home','view-create','view-action'].forEach(v => document.getElementById(v).classList.add('hidden'));
       document.getElementById(id).classList.remove('hidden');
     }
     function showCreate() { show('view-create'); document.getElementById('createResult').innerHTML=''; }
@@ -346,19 +379,12 @@
       if (tab === 'compil') loadCompil();
     }
 
-    // --- CRÉER UNE ACTION ---
     async function createAction() {
       const name = document.getElementById('actionName').value.trim();
       const resEl = document.getElementById('createResult');
-      if (!name) {
-        resEl.innerHTML = '<div class="status error">Renseignez le nom de l\'action.</div>';
-        return;
-      }
+      if (!name) { resEl.innerHTML = '<div class="status error">Renseignez le nom de l\'action.</div>'; return; }
       try {
-        const r = await fetch('/api/actions', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name })
-        });
+        const r = await fetch('/api/actions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name }) });
         const d = await r.json();
         if (!r.ok) throw new Error(d.error || 'Erreur');
         const base = window.location.origin;
@@ -368,13 +394,8 @@
           <p style="font-size:.9rem;font-weight:600;margin-bottom:6px">Voici le lien à partager dans votre groupe :</p>
           <div class="link-box">${link}</div>
           <button class="copy-btn" onclick="copyLink('${link.replace(/'/g,"\\'")}')">📋 Copier le lien</button>
-          <p style="font-size:.8rem;color:#8a857c;margin-top:10px">
-            Quiconque ouvre ce lien peut saisir les portes et voir les résultats. Gardez-le dans votre boucle d'action.
-          </p>
-        `;
-      } catch (e) {
-        resEl.innerHTML = `<div class="status error">Erreur : ${e.message}</div>`;
-      }
+          <p style="font-size:.8rem;color:#8a857c;margin-top:10px">Quiconque ouvre ce lien peut saisir et voir les résultats. Gardez-le dans votre boucle d'action.</p>`;
+      } catch (e) { resEl.innerHTML = `<div class="status error">Erreur : ${e.message}</div>`; }
     }
 
     function copyLink(link) {
@@ -382,53 +403,32 @@
       else { const t=document.createElement('textarea'); t.value=link; document.body.appendChild(t); t.select(); document.execCommand('copy'); document.body.removeChild(t); alert('Lien copié !'); }
     }
 
-    // --- OUVERTURE LIEN OPAQUE ---
     async function openToken(token) {
       try {
         const r = await fetch(`/api/link/${encodeURIComponent(token)}`);
         const d = await r.json();
         if (!r.ok) throw new Error(d.error || 'Lien invalide');
-        state.actionId = d.actionId;
-        state.cipherKey = d.key;
-        loadAction();
-      } catch (e) {
-        alert('Lien invalide ou expiré : ' + e.message);
-        show('view-home');
-      }
+        state.actionId = d.actionId; state.cipherKey = d.key; loadAction();
+      } catch (e) { alert('Lien invalide ou expiré : ' + e.message); show('view-home'); }
     }
 
     async function loadAction() {
       document.getElementById('action-bar').classList.remove('hidden');
-      show('view-action');
-      showTab('saisie');
+      show('view-action'); showTab('saisie');
       try {
         const r = await fetch(`/api/actions/${state.actionId}/export?masterKey=${encodeURIComponent(state.cipherKey)}`);
-        if (r.ok) {
-          const d = await r.json();
-          state.actionName = d.action.name;
-          document.getElementById('actionBarName').textContent = '🚪 ' + d.action.name;
-        }
+        if (r.ok) { const d = await r.json(); state.actionName = d.action.name; document.getElementById('actionBarName').innerHTML = '<span class="dot">●</span> ' + d.action.name; }
       } catch(e) {}
       state.selectedInteraction = null;
       ['floor','doorNumber','building','team','details'].forEach(id => document.getElementById(id).value='');
-      hideStatus();
-      renderInteractions();
-      updateCounter();
+      hideStatus(); renderInteractions(); updateCounter();
     }
 
     function renderInteractions() {
-      const box = document.getElementById('interactionsBox');
-      box.innerHTML = '';
+      const box = document.getElementById('interactionsBox'); box.innerHTML = '';
       INTERACTIONS.forEach(i => {
-        const el = document.createElement('div');
-        el.className = 'interaction';
-        el.textContent = i.label;
-        el.dataset.id = i.id;
-        el.onclick = () => {
-          box.querySelectorAll('.interaction').forEach(x => x.classList.remove('selected'));
-          el.classList.add('selected');
-          state.selectedInteraction = i.id;
-        };
+        const el = document.createElement('div'); el.className = 'interaction'; el.textContent = i.label; el.dataset.id = i.id;
+        el.onclick = () => { box.querySelectorAll('.interaction').forEach(x => x.classList.remove('selected')); el.classList.add('selected'); state.selectedInteraction = i.id; };
         box.appendChild(el);
       });
     }
@@ -440,8 +440,11 @@
         if (r.ok) {
           const d = await r.json();
           document.getElementById('counter').innerHTML =
-            `<div class="nums"><span>${d.total}</span> <span class="slash">portes</span></div>` +
-            `<div class="label">enregistrées</div>`;
+            `<div class="nums"><span>${d.total}</span></div>` +
+            `<div class="label">portes enregistrées</div>`;
+          const pct = Math.min(100, Math.round((d.total / PROGRESS_TARGET) * 100));
+          document.getElementById('progressFill').style.width = pct + '%';
+          if (d.total === 0) document.getElementById('progressFill').style.width = '0%';
         }
       } catch(e) {}
     }
@@ -456,32 +459,20 @@
       if (!floor && !doorNumber) { showStatus('error', 'Indiquez au moins l\'étage ou le n° de porte.'); return; }
       if (!interaction) { showStatus('error', 'Choisissez un type d\'interaction.'); return; }
       try {
-        const r = await fetch(`/api/actions/${state.actionId}/doors`, {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ teamCode: team || null, cipherKey: state.cipherKey, building, floor, doorNumber, interaction, details })
-        });
+        const r = await fetch(`/api/actions/${state.actionId}/doors`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ teamCode: team || null, cipherKey: state.cipherKey, building, floor, doorNumber, interaction, details }) });
         const d = await r.json();
         if (!r.ok) throw new Error(d.error || 'Erreur');
         showStatus('success', '✅ Porte enregistrée !');
-        document.getElementById('floor').value = '';
-        document.getElementById('doorNumber').value = '';
-        document.getElementById('details').value = '';
-        state.selectedInteraction = null;
-        renderInteractions();
-        updateCounter();
+        document.getElementById('floor').value=''; document.getElementById('doorNumber').value=''; document.getElementById('details').value='';
+        state.selectedInteraction = null; renderInteractions(); updateCounter();
         document.getElementById('floor').focus();
-      } catch (e) {
-        showStatus('error', 'Erreur : ' + e.message);
-      }
+      } catch (e) { showStatus('error', 'Erreur : ' + e.message); }
     }
 
-    // --- COMPILATION ---
     async function loadCompil() {
       if (!state.actionId || !state.cipherKey) return;
-      const statsEl = document.getElementById('compilStats');
-      const tbody = document.querySelector('#compilTable tbody');
-      statsEl.innerHTML = '<p class="muted">Chargement...</p>';
-      tbody.innerHTML = '';
+      const statsEl = document.getElementById('compilStats'); const tbody = document.querySelector('#compilTable tbody');
+      statsEl.innerHTML = '<p class="muted">Chargement...</p>'; tbody.innerHTML = '';
       try {
         const r = await fetch(`/api/actions/${state.actionId}/export?masterKey=${encodeURIComponent(state.cipherKey)}`);
         const d = await r.json();
@@ -496,64 +487,34 @@
         d.doors.forEach(x => { counts[x.interaction] = (counts[x.interaction]||0)+1; });
         if (d.total > 0) {
           let sum = '<div class="chip-row">';
-          Object.entries(counts).forEach(([k,v]) => {
-            const label = (INTERACTIONS.find(i=>i.id===k)||{}).label || k;
-            sum += `<span class="chip">${label} : ${v}</span> `;
-          });
-          sum += '</div>';
-          statsEl.innerHTML += sum;
+          Object.entries(counts).forEach(([k,v]) => { const label = (INTERACTIONS.find(i=>i.id===k)||{}).label || k; sum += `<span class="chip">${label} : ${v}</span> `; });
+          sum += '</div>'; statsEl.innerHTML += sum;
         }
-        document.querySelector('#compilTable thead tr').innerHTML =
-          '<th>Étage</th><th>N°</th><th>Immeuble</th><th>Interaction</th><th>Détails</th><th>Équipe</th><th>Heure</th>';
+        document.querySelector('#compilTable thead tr').innerHTML = '<th>Étage</th><th>N°</th><th>Immeuble</th><th>Interaction</th><th>Détails</th><th>Équipe</th><th>Heure</th>';
         d.doors.forEach(door => {
           const tr = document.createElement('tr');
           const interLabel = (INTERACTIONS.find(i=>i.id===door.interaction)||{}).label || door.interaction || '';
-          tr.innerHTML = `
-            <td>${door.floor || ''}</td><td>${door.doorNumber || ''}</td><td>${door.building || ''}</td>
-            <td>${interLabel}</td><td>${door.details || ''}</td><td>${door.team || ''}</td>
-            <td>${door.createdAt ? new Date(door.createdAt).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}) : ''}</td>`;
+          tr.innerHTML = `<td>${door.floor||''}</td><td>${door.doorNumber||''}</td><td>${door.building||''}</td><td>${interLabel}</td><td>${door.details||''}</td><td>${door.team||''}</td><td>${door.createdAt?new Date(door.createdAt).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}):''}</td>`;
           tbody.appendChild(tr);
         });
-      } catch (e) {
-        statsEl.innerHTML = `<div class="status error">Erreur : ${e.message}${e.message.includes('incorrecte') ? ' — vérifiez la clé.' : ''}</div>`;
-      }
+      } catch (e) { statsEl.innerHTML = `<div class="status error">Erreur : ${e.message}${e.message.includes('incorrecte')?' — vérifiez la clé.':''}</div>`; }
     }
 
     function exportCsv() {
-      const tbody = document.querySelector('#compilTable tbody');
-      const rows = [...tbody.querySelectorAll('tr')];
+      const tbody = document.querySelector('#compilTable tbody'); const rows = [...tbody.querySelectorAll('tr')];
       let csv = 'Étage;N°;Immeuble;Interaction;Détails;Équipe;Heure\n';
-      rows.forEach(tr => {
-        const cols = [...tr.querySelectorAll('td')].map(td => '"' + (td.textContent||'').replace(/"/g,'""') + '"');
-        csv += cols.join(';') + '\n';
-      });
-      const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = 'pap-lfi-compilation.csv';
-      a.click();
+      rows.forEach(tr => { const cols = [...tr.querySelectorAll('td')].map(td => '"'+(td.textContent||'').replace(/"/g,'""')+'"'); csv += cols.join(';')+'\n'; });
+      const blob = new Blob(['\uFEFF'+csv], { type: 'text/csv;charset=utf-8;' });
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download='pap-lfi-compilation.csv'; a.click();
     }
 
-    function showStatus(type, msg) {
-      const el = document.getElementById('status');
-      el.className = 'status ' + type;
-      el.textContent = msg;
-    }
-    function hideStatus() {
-      const el = document.getElementById('status');
-      el.className = 'status';
-      el.textContent = '';
-    }
+    function showStatus(type, msg) { const el=document.getElementById('status'); el.className='status '+type; el.textContent=msg; }
+    function hideStatus() { const el=document.getElementById('status'); el.className='status'; el.textContent=''; }
 
-    // --- INIT ---
     (function init() {
       const pathMatch = window.location.pathname.match(/^\/r\/([^/]+)$/);
-      if (pathMatch) {
-        openToken(decodeURIComponent(pathMatch[1]));
-      } else {
-        history.replaceState({}, '', '/');
-        show('view-home');
-      }
+      if (pathMatch) openToken(decodeURIComponent(pathMatch[1]));
+      else { history.replaceState({}, '', '/'); show('view-home'); }
     })();
   </script>
 </body>
