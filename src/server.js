@@ -2,10 +2,13 @@
  * PAP-LFI — Serveur Express principal (avec Supabase)
  * 
  * Routes :
- * - POST /api/actions            : créer une action (retourne le lien à partager)
+ * - POST /api/actions            : créer une action (retourne le lien UUID à partager)
  * - POST /api/actions/:id/doors  : enregistrer une porte visitée (données chiffrées)
  * - GET  /api/actions/:id/export : compilation déchiffrée (réservée au créateur)
  * - GET  / (static)              : app web
+ * 
+ * L'ID d'action est un UUID (ex: 97c7335f-aab5-4bdb-9119-9113050cb0b2),
+ * le lien partagé contient l'UUID + la clé maître de chiffrement.
  */
 
 const express = require('express');
@@ -19,12 +22,22 @@ app.use(express.json({ limit: '1mb' }));
 // --- Servir les fichiers statiques (front) ---
 app.use(express.static(path.join(__dirname, '..', 'public')));
 
+// Route SPA : /action/:uuid sert toujours l'app (le front lit l'UUID dans l'URL)
+app.get('/action/:uuid', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
+});
+
+// Helper : valider un UUID
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+function isValidUUID(v) { return typeof v === 'string' && UUID_RE.test(v); }
+
 // --- Routes API ---
 
 /**
  * POST /api/actions
  * Créer une nouvelle action de porte-à-porte.
  * Body : { name: string, masterKey: string }
+ * Retourne l'UUID de l'action + le lien à partager.
  */
 app.post('/api/actions', async (req, res) => {
   try {
@@ -61,7 +74,10 @@ app.post('/api/actions', async (req, res) => {
  */
 app.post('/api/actions/:id/doors', async (req, res) => {
   try {
-    const actionId = parseInt(req.params.id, 10);
+    const actionId = req.params.id;
+    if (!isValidUUID(actionId)) {
+      return res.status(400).json({ error: 'Identifiant d\'action invalide.' });
+    }
     const { teamCode, cipherKey, building, floor, doorNumber, interaction, details } = req.body || {};
 
     // Vérifier que l'action existe
@@ -111,7 +127,10 @@ app.post('/api/actions/:id/doors', async (req, res) => {
  */
 app.get('/api/actions/:id/export', async (req, res) => {
   try {
-    const actionId = parseInt(req.params.id, 10);
+    const actionId = req.params.id;
+    if (!isValidUUID(actionId)) {
+      return res.status(400).json({ error: 'Identifiant d\'action invalide.' });
+    }
     const { masterKey } = req.query;
 
     if (!masterKey) {

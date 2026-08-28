@@ -3,100 +3,193 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>PAP-LFI — Porte-à-Porte</title>
+  <title>✊ Porte-à-Porte — La France Insoumise</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
   <style>
+    :root {
+      --lfi-red: #E1000F;
+      --lfi-red-dark: #B3000C;
+      --lfi-black: #111111;
+      --lfi-white: #ffffff;
+      --lfi-gray: #666666;
+      --lfi-light: #f5f1ec;
+    }
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background: #f5f5f5; color: #1a1a1a; min-height: 100vh; padding-bottom: 80px;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--lfi-white); color: var(--lfi-black); min-height: 100vh;
+      padding-bottom: 90px;
     }
-    .header {
-      background: #e1000f; color: #fff; padding: 16px 20px; text-align: center;
-      box-shadow: 0 2px 8px rgba(0,0,0,.15);
+    /* Bandeau militant */
+    .hero {
+      background: var(--lfi-red); color: #fff; padding: 28px 20px 24px;
+      position: relative; overflow: hidden;
     }
-    .header h1 { font-size: 1.4rem; letter-spacing: .5px; }
-    .header p { font-size: .85rem; opacity: .9; margin-top: 2px; }
-    .container { max-width: 560px; margin: 0 auto; padding: 16px; }
+    .hero::after {
+      content: '✊'; position: absolute; right: -10px; bottom: -30px;
+      font-size: 120px; opacity: .12; transform: rotate(-10deg);
+    }
+    .hero h1 {
+      font-family: 'Anton', sans-serif; font-weight: 400;
+      font-size: 1.9rem; letter-spacing: 1px; text-transform: uppercase;
+      line-height: 1.05; position: relative; z-index: 1;
+    }
+    .hero p {
+      font-size: .9rem; opacity: .95; margin-top: 6px; font-weight: 600;
+      position: relative; z-index: 1;
+    }
+    .hero .badge {
+      display: inline-block; background: #fff; color: var(--lfi-red);
+      font-size: .7rem; font-weight: 800; letter-spacing: 1px;
+      padding: 3px 10px; border-radius: 20px; text-transform: uppercase;
+      margin-top: 10px; position: relative; z-index: 1;
+    }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px 16px; }
+
+    /* Cartes */
     .card {
-      background: #fff; border-radius: 12px; padding: 20px; margin-bottom: 16px;
-      box-shadow: 0 1px 4px rgba(0,0,0,.08);
+      background: #fff; border: 1px solid #eee; border-radius: 14px;
+      padding: 22px; margin-bottom: 16px;
+      box-shadow: 0 1px 4px rgba(0,0,0,.06);
     }
-    h2 { font-size: 1.1rem; margin-bottom: 12px; color: #e1000f; }
-    label { display: block; font-size: .9rem; font-weight: 600; margin-bottom: 6px; color: #333; }
+    h2 {
+      font-family: 'Anton', sans-serif; font-weight: 400; text-transform: uppercase;
+      font-size: 1.2rem; letter-spacing: .5px; margin-bottom: 16px; color: var(--lfi-black);
+    }
+    .section-tag {
+      display: inline-block; background: var(--lfi-red); color: #fff;
+      font-size: .65rem; font-weight: 800; letter-spacing: 1.5px;
+      padding: 3px 10px; border-radius: 3px; text-transform: uppercase; margin-bottom: 10px;
+    }
+
+    /* Formulaires */
+    label { display: block; font-size: .82rem; font-weight: 700; margin-bottom: 6px; color: #333; text-transform: uppercase; letter-spacing: .5px; }
     input, select, textarea {
-      width: 100%; padding: 14px; border: 2px solid #ddd; border-radius: 8px;
-      font-size: 1rem; margin-bottom: 14px; background: #fafafa;
+      width: 100%; padding: 15px 14px; border: 2px solid #ddd; border-radius: 10px;
+      font-size: 1rem; margin-bottom: 16px; background: #fafafa; font-family: 'Inter', sans-serif;
     }
-    input:focus, select:focus, textarea:focus { border-color: #e1000f; outline: none; background: #fff; }
+    input:focus, select:focus, textarea:focus { border-color: var(--lfi-red); outline: none; background: #fff; }
     textarea { min-height: 70px; resize: vertical; }
+
+    /* Boutons */
     .btn {
-      width: 100%; padding: 16px; border: none; border-radius: 10px;
-      font-size: 1.05rem; font-weight: 700; cursor: pointer;
-      background: #e1000f; color: #fff; transition: transform .1s, opacity .2s;
+      width: 100%; padding: 17px; border: none; border-radius: 12px;
+      font-size: 1rem; font-weight: 800; cursor: pointer; letter-spacing: 1px;
+      background: var(--lfi-red); color: #fff; text-transform: uppercase;
+      transition: transform .1s, opacity .2s; font-family: 'Inter', sans-serif;
     }
     .btn:active { transform: scale(.97); }
-    .btn.secondary { background: #333; }
+    .btn.secondary { background: var(--lfi-black); }
     .btn.green { background: #1a8a3a; }
     .btn:disabled { opacity: .5; cursor: not-allowed; }
-    .interactions { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 14px; }
-    .interaction {
-      padding: 14px 10px; border: 2px solid #ddd; border-radius: 10px; text-align: center;
-      cursor: pointer; font-weight: 600; font-size: .9rem; background: #fafafa; transition: all .15s;
+    .btn.small { padding: 11px; font-size: .82rem; border-radius: 8px; }
+
+    /* Boutons d'accueil géants */
+    .home-btn {
+      width: 100%; padding: 24px; border: 2px solid var(--lfi-red); border-radius: 16px;
+      background: #fff; color: var(--lfi-red); font-weight: 800; font-size: 1.15rem;
+      cursor: pointer; text-align: center; margin-bottom: 14px; transition: all .15s;
+      font-family: 'Anton', sans-serif; text-transform: uppercase; letter-spacing: 1px;
     }
-    .interaction.selected { border-color: #e1000f; background: #fdecea; color: #e1000f; }
-    .status { text-align: center; padding: 12px; border-radius: 8px; margin-bottom: 12px; font-weight: 600; display: none; }
+    .home-btn .sub { display:block; font-family:'Inter',sans-serif; font-size:.75rem; font-weight:600; color:#888; text-transform:none; letter-spacing:0; margin-top:4px; }
+    .home-btn:hover { background: var(--lfi-red); color: #fff; }
+    .home-btn:hover .sub { color: rgba(255,255,255,.85); }
+    .home-btn.dark { border-color: var(--lfi-black); color: var(--lfi-black); }
+    .home-btn.dark:hover { background: var(--lfi-black); color: #fff; }
+    .home-btn.dark:hover .sub { color: rgba(255,255,255,.8); }
+
+    /* Interactions */
+    .interactions { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 16px; }
+    .interaction {
+      padding: 16px 10px; border: 2px solid #ddd; border-radius: 12px; text-align: center;
+      cursor: pointer; font-weight: 700; font-size: .88rem; background: #fff; transition: all .15s;
+    }
+    .interaction.selected { border-color: var(--lfi-red); background: #fdecea; color: var(--lfi-red); box-shadow: 0 0 0 2px rgba(225,0,15,.15); }
+
+    /* Statuts */
+    .status { text-align: center; padding: 14px; border-radius: 10px; margin-bottom: 14px; font-weight: 700; display: none; }
     .status.success { background: #e8f5e9; color: #1a8a3a; display: block; }
     .status.error { background: #fdecea; color: #c62828; display: block; }
-    .counter { text-align: center; font-size: .9rem; color: #666; margin-bottom: 8px; }
+
+    .counter { text-align: center; font-size: .88rem; color: #666; margin-bottom: 10px; font-weight: 600; }
     .row { display: flex; gap: 10px; }
     .row > div { flex: 1; }
     .hidden { display: none !important; }
-    .link-box { background: #f0f0f0; padding: 12px; border-radius: 8px; word-break: break-all; font-size: .85rem; margin: 10px 0; }
-    .table-wrap { overflow-x: auto; }
-    table { width: 100%; border-collapse: collapse; font-size: .85rem; }
-    th, td { padding: 8px; border-bottom: 1px solid #eee; text-align: left; }
-    th { background: #f7f7f7; position: sticky; top: 0; }
-    .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: .75rem; font-weight: 700; }
-    .footer-note { text-align: center; font-size: .75rem; color: #999; padding: 10px; }
-    .btn.small { padding: 10px; font-size: .9rem; }
+
+    /* Boîte de lien partagé */
+    .link-box {
+      background: var(--lfi-light); border: 2px dashed #ccc; padding: 14px;
+      border-radius: 10px; word-break: break-all; font-size: .85rem; margin: 12px 0;
+      font-family: monospace;
+    }
+    .copy-btn { background: var(--lfi-black); color:#fff; border:none; padding:10px; border-radius:8px; font-weight:700; cursor:pointer; width:100%; margin-top:6px; }
+
+    /* Table compilation */
+    .table-wrap { overflow-x: auto; border: 1px solid #eee; border-radius: 10px; }
+    table { width: 100%; border-collapse: collapse; font-size: .82rem; }
+    th, td { padding: 10px 8px; border-bottom: 1px solid #f0f0f0; text-align: left; }
+    th { background: var(--lfi-black); color: #fff; position: sticky; top: 0; font-size: .72rem; text-transform: uppercase; letter-spacing: .5px; }
+    tr:nth-child(even) { background: #fafafa; }
+
+    /* Stats */
+    .stats-box { background: var(--lfi-red); color:#fff; padding:18px; border-radius:12px; margin-bottom:14px; }
+    .stats-box .big { font-family:'Anton',sans-serif; font-size:2.2rem; line-height:1; }
+    .stats-box .label { font-size:.8rem; opacity:.9; text-transform:uppercase; letter-spacing:1px; }
+
+    .footer-note { text-align: center; font-size: .75rem; color: #aaa; padding: 14px 10px; }
+    .footer-note .lock { color: var(--lfi-red); font-weight: 700; }
+
+    .muted { color: #888; font-size: .85rem; }
+    .big-warning { background:#fff8e1; border-left:4px solid #f9a825; padding:12px; border-radius:6px; font-size:.85rem; margin-top:12px; }
   </style>
 </head>
 <body>
-  <div class="header">
-    <h1>✊ PAP-LFI</h1>
-    <p>Porte-à-porte — Saisie terrain</p>
+  <div class="hero">
+    <h1>Porte-à-Porte</h1>
+    <p>La France Insoumise — outil de terrain</p>
+    <span class="badge">✊ Saisie militante</span>
   </div>
 
   <div class="container">
 
-    <!-- Vue : login équipe / créateur -->
-    <div id="view-login" class="card">
-      <h2>Accès</h2>
-      <label>Code d'accès</label>
-      <input type="password" id="accessCode" placeholder="Code équipe ou clé maître" autocomplete="off">
-      <button class="btn" onclick="handleLogin()">Se connecter</button>
-      <p style="font-size:.8rem;color:#888;margin-top:10px">
-        💡 Les équipes utilisent leur code d'équipe. Le créateur de l'action utilise sa clé maître pour voir la compilation.
-      </p>
+    <!-- Vue : accueil deux boutons -->
+    <div id="view-home" class="hidden">
+      <button class="home-btn" onclick="startNewAction()">
+        ➕ Créer une action
+        <span class="sub">Générer un lien pour les équipes</span>
+      </button>
+      <button class="home-btn dark" onclick="openSharedLink()">
+        🔗 Ouvrir un lien d'action
+        <span class="sub">Rejoindre une action partagée</span>
+      </button>
+      <div class="card" style="margin-top:6px">
+        <span class="section-tag">Compilation</span>
+        <p class="muted" style="margin-bottom:12px">Le créateur de l'action consulte ici les résultats.</p>
+        <button class="btn" onclick="showCompil()">📊 Voir la compilation</button>
+      </div>
     </div>
 
     <!-- Vue : créer une action -->
     <div id="view-create" class="card hidden">
-      <h2>➕ Nouvelle action</h2>
+      <span class="section-tag">Nouvelle action</span>
+      <h2>➕ Créer une action</h2>
       <label>Nom de l'action</label>
-      <input type="text" id="actionName" placeholder="Ex : Porte-à-porte Quartier Nord, dim. 07/09">
-      <label>Clé maître (pour consulter les résultats)</label>
+      <input type="text" id="actionName" placeholder="Ex : Porte-à-porte Quartier Nord" autocomplete="off">
+      <label>Clé maître (pour déchiffrer les résultats)</label>
       <input type="password" id="masterKey" placeholder="Choisissez une clé secrète (min 4 car.)" autocomplete="off">
-      <label>Code équipe (pour cette équipe)</label>
+      <label>Code équipe (cette équipe)</label>
       <input type="text" id="teamCodeCreate" placeholder="Ex : EQUIPE-A3" autocomplete="off">
       <button class="btn green" onclick="createAction()">Créer l'action</button>
       <div id="createResult"></div>
+      <button class="btn secondary" style="margin-top:12px" onclick="goHome()">↩️ Retour</button>
     </div>
 
     <!-- Vue : saisie porte -->
     <div id="view-saisie" class="card hidden">
       <div class="counter" id="counter"></div>
       <div class="status" id="status"></div>
+      <span class="section-tag">Saisie terrain</span>
       <h2>🚪 Nouvelle porte</h2>
       <div class="row">
         <div>
@@ -105,7 +198,7 @@
         </div>
         <div>
           <label>N° porte</label>
-          <input type="text" id="doorNumber" placeholder="Ex : 12 ou B" >
+          <input type="text" id="doorNumber" placeholder="Ex : 12 ou B">
         </div>
       </div>
       <label>Immeuble / rue (optionnel)</label>
@@ -115,14 +208,17 @@
       <label>Détails / notes (optionnel)</label>
       <textarea id="details" placeholder="Infos complémentaires..."></textarea>
       <button class="btn" onclick="submitDoor()">💾 Enregistrer</button>
-      <button class="btn secondary" style="margin-top:10px" onclick="logout()">🚪 Changer d'accès</button>
+      <button class="btn secondary" style="margin-top:10px" onclick="goHome()">↩️ Terminer</button>
     </div>
 
     <!-- Vue : compilation créateur -->
     <div id="view-compil" class="card hidden">
-      <h2>📊 Compilation</h2>
+      <span class="section-tag">Compilation</span>
+      <h2>📊 Résultats</h2>
       <div id="compilStats"></div>
-      <button class="btn secondary small" onclick="exportCsv()" style="margin-bottom:12px">⬇️ Exporter CSV</button>
+      <div style="display:flex;gap:8px;margin-bottom:12px">
+        <button class="btn secondary small" onclick="exportCsv()">⬇️ CSV</button>
+      </div>
       <div class="table-wrap">
         <table id="compilTable">
           <thead>
@@ -131,39 +227,44 @@
           <tbody></tbody>
         </table>
       </div>
-      <button class="btn secondary" style="margin-top:14px" onclick="logout()">↩️ Retour</button>
+      <button class="btn secondary" style="margin-top:14px" onclick="goHome()">↩️ Retour</button>
     </div>
 
-    <!-- Vue : accueil deux boutons -->
-    <div id="view-home" class="card hidden">
-      <h2>Bienvenue</h2>
-      <p style="margin-bottom:16px;color:#555">Que voulez-vous faire ?</p>
-      <button class="btn" onclick="showCreate()">➕ Créer une action</button>
-      <button class="btn secondary" style="margin-top:12px" onclick="showSaisie()">🚪 Saisir des portes</button>
-      <button class="btn green" style="margin-top:12px" onclick="showCompil()">📊 Voir la compilation</button>
+    <!-- Vue : demande de clé maître pour compilation -->
+    <div id="view-compil-login" class="card hidden">
+      <span class="section-tag">Compilation</span>
+      <h2>🔑 Clé maître requise</h2>
+      <p class="muted" style="margin-bottom:14px">Entrez la clé maître de l'action pour déchiffrer et voir les résultats.</p>
+      <label>Clé maître</label>
+      <input type="password" id="compilKey" placeholder="Clé secrète de l'action" autocomplete="off">
+      <button class="btn" onclick="doCompil()">Voir la compilation</button>
+      <button class="btn secondary" style="margin-top:10px" onclick="goHome()">↩️ Retour</button>
     </div>
 
   </div>
 
-  <div class="footer-note">PAP-LFI — Données chiffrées de bout en bout.<br>🔒 Même si le serveur est compromis, vos données restent illisibles.</div>
+  <div class="footer-note">
+    <span class="lock">🔒 Données chiffrées de bout en bout</span><br>
+    PAP-LFI — La France Insoumise
+  </div>
 
   <script>
-    // --- Configuration ---
+    // --- Interactions ---
     const INTERACTIONS = [
-      { id: 'pas-reponse', label: '📬 Pas de réponse', color: '#888' },
-      { id: 'sympa', label: '😊 Sympathique', color: '#2e7d32' },
-      { id: 'interesse', label: '🤝 Intéressé·e', color: '#1565c0' },
-      { id: 'adherent', label: '❤️ Adhérent·e', color: '#c62828' },
-      { id: 'indecis', label: '🗳️ Indécis·e', color: '#f9a825' },
-      { id: 'refus', label: '🙅 Refus / hostile', color: '#6a1b9a' },
-      { id: 'ne-sonne-pas', label: '♿ Ne sonne pas', color: '#546e7a' }
+      { id: 'pas-reponse', label: '📬 Pas de réponse' },
+      { id: 'sympa', label: '😊 Sympathique' },
+      { id: 'interesse', label: '🤝 Intéressé·e' },
+      { id: 'adherent', label: '❤️ Adhérent·e' },
+      { id: 'indecis', label: '🗳️ Indécis·e' },
+      { id: 'refus', label: '🙅 Refus / hostile' },
+      { id: 'ne-sonne-pas', label: '♿ Ne sonne pas' }
     ];
 
-    // État local (sessionStorage pour persister pendant la session)
+    // --- État ---
     let state = {
       accessCode: sessionStorage.getItem('pap_accessCode') || '',
       cipherKey: sessionStorage.getItem('pap_cipherKey') || '',
-      actionId: sessionStorage.getItem('pap_actionId') || null,
+      actionId: sessionStorage.getItem('pap_actionId') || null, // UUID
       selectedInteraction: null
     };
 
@@ -173,34 +274,62 @@
       sessionStorage.setItem('pap_actionId', state.actionId || '');
     }
 
+    const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
     // --- Navigation ---
     function show(id) {
-      ['view-login','view-create','view-saisie','view-compil','view-home'].forEach(v => {
+      ['view-home','view-create','view-saisie','view-compil','view-compil-login'].forEach(v => {
         document.getElementById(v).classList.add('hidden');
       });
       document.getElementById(id).classList.remove('hidden');
     }
+    function goHome() { show('view-home'); }
 
-    function handleLogin() {
-      const code = document.getElementById('accessCode').value.trim();
-      if (!code) { showStatus('error', 'Entrez un code.'); return; }
-      state.accessCode = code;
-      saveState();
-      show('view-home');
-      document.getElementById('accessCode').value = '';
-    }
+    // --- Accueil : créer une action ---
+    function startNewAction() { show('view-create'); document.getElementById('createResult').innerHTML=''; }
 
-    function showCreate() { show('view-create'); document.getElementById('createResult').innerHTML=''; }
-    function showSaisie() { initSaisie(); }
-    function showCompil() { loadCompil(); }
-
-    function logout() {
-      state.accessCode = '';
-      state.actionId = null;
-      state.cipherKey = '';
-      state.selectedInteraction = null;
-      sessionStorage.clear();
-      show('view-login');
+    // --- Accueil : ouvrir un lien partagé ---
+    function openSharedLink() {
+      // Le lien est déjà dans l'URL (?action=UUID&key=...) quand on arrive via un lien partagé.
+      const params = new URLSearchParams(window.location.search);
+      const actionParam = params.get('action');
+      const keyParam = params.get('key');
+      if (actionParam && UUID_RE.test(actionParam)) {
+        state.actionId = actionParam;
+        if (keyParam) state.cipherKey = decodeURIComponent(keyParam);
+        saveState();
+        // Demander le code équipe si pas encore défini
+        if (!state.accessCode) {
+          const code = prompt('Entrez votre code équipe (ex : EQUIPE-A3) :');
+          if (code && code.trim()) {
+            state.accessCode = code.trim();
+            saveState();
+            initSaisie();
+          }
+        } else {
+          initSaisie();
+        }
+      } else {
+        const url = prompt('Collez le lien d\'action partagé :');
+        if (!url) return;
+        try {
+          const u = new URL(url);
+          const p = u.searchParams;
+          const a = p.get('action');
+          const k = p.get('key');
+          if (a && UUID_RE.test(a)) {
+            state.actionId = a;
+            if (k) state.cipherKey = decodeURIComponent(k);
+            saveState();
+            if (!state.accessCode) {
+              const code = prompt('Entrez votre code équipe :');
+              if (code && code.trim()) { state.accessCode = code.trim(); saveState(); initSaisie(); }
+            } else { initSaisie(); }
+          } else {
+            alert('Lien invalide : identifiant d\'action manquant.');
+          }
+        } catch(e) { alert('Lien invalide.'); }
+      }
     }
 
     // --- Création d'action ---
@@ -225,35 +354,55 @@
         if (!r.ok) throw new Error(d.error || 'Erreur');
 
         state.actionId = d.id;
-        state.accessCode = teamCode; // l'équipe utilise son code
-        state.cipherKey = masterKey; // la clé maître sert de clé de chiffrement
+        state.accessCode = teamCode;
+        state.cipherKey = masterKey;
         saveState();
 
         const base = window.location.origin;
+        const link = `${base}/action/${d.id}?key=${encodeURIComponent(masterKey)}`;
         resEl.innerHTML = `
           <div class="status success">✅ Action créée !</div>
-          <p style="font-size:.9rem;margin-bottom:6px">Partagez ce lien aux équipes (il contient la clé de chiffrement) :</p>
-          <div class="link-box">${base}/?action=${d.id}&key=${encodeURIComponent(masterKey)}</div>
-          <p style="font-size:.8rem;color:#888">Les équipes ouvrent le lien, entrent leur code d'équipe puis saisissent les portes.</p>
-          <p style="font-size:.8rem;color:#c62828;margin-top:6px">🔑 Gardez précieusement votre clé maître "${masterKey}" : c'est elle qui déchiffre tout. Sans elle, les données sont irrécupérables.</p>
+          <p style="font-size:.9rem;font-weight:600;margin-bottom:6px">Lien à partager aux équipes :</p>
+          <div class="link-box">${link}</div>
+          <button class="copy-btn" onclick="copyLink('${link.replace(/'/g,"\\'")}')">📋 Copier le lien</button>
+          <p style="font-size:.8rem;color:#666;margin-top:10px">
+            Les équipes ouvrent ce lien, entrent leur code équipe puis saisissent les portes.
+          </p>
+          <div class="big-warning">
+            🔑 <strong>Gardez précieusement votre clé maître "${masterKey}"</strong> : c'est elle qui déchiffre tout.
+            Sans elle, les données sont irrécupérables. Ne la partagez pas.
+          </div>
+          <button class="btn secondary" style="margin-top:14px" onclick="initSaisie()">🚪 Commencer à saisir</button>
         `;
       } catch (e) {
         resEl.innerHTML = `<div class="status error">Erreur : ${e.message}</div>`;
       }
     }
 
+    function copyLink(link) {
+      if (navigator.clipboard) navigator.clipboard.writeText(link).then(()=>alert('Lien copié !'));
+      else { const t=document.createElement('textarea'); t.value=link; document.body.appendChild(t); t.select(); document.execCommand('copy'); document.body.removeChild(t); alert('Lien copié !'); }
+    }
+
     // --- Saisie de porte ---
     function initSaisie() {
-      // Récupérer l'action et la clé depuis l'URL si présentes
+      // Récupérer l'action et la clé depuis l'URL (route /action/:uuid?key=)
+      const pathMatch = window.location.pathname.match(/^\/action\/([0-9a-f-]+)$/i);
       const params = new URLSearchParams(window.location.search);
-      const actionParam = params.get('action');
+      const actionParam = params.get('action') || (pathMatch ? pathMatch[1] : null);
       const keyParam = params.get('key');
-      if (actionParam) state.actionId = parseInt(actionParam, 10);
-      if (keyParam) state.cipherKey = decodeURIComponent(keyParam);
-      saveState();
 
-      if (!state.accessCode) { show('view-login'); return; }
-      if (!state.actionId) { show('view-home'); return; }
+      if (actionParam && UUID_RE.test(actionParam)) {
+        state.actionId = actionParam;
+        if (keyParam) state.cipherKey = decodeURIComponent(keyParam);
+        saveState();
+      }
+
+      if (!state.accessCode) { openSharedLink(); return; }
+      if (!state.actionId || !UUID_RE.test(state.actionId)) {
+        alert('Aucune action en cours. Créez ou ouvrez un lien d\'action.');
+        goHome(); return;
+      }
 
       state.selectedInteraction = null;
       document.getElementById('floor').value='';
@@ -286,11 +435,10 @@
     async function updateCounter() {
       if (!state.actionId) return;
       try {
-        // Comptage côté client via l'export (simple) — on compte seulement en local pour l'instant
-        const r = await fetch(`/api/actions/${state.actionId}/export?masterKey=${encodeURIComponent(state.accessCode)}`);
+        const r = await fetch(`/api/actions/${state.actionId}/export?masterKey=${encodeURIComponent(state.cipherKey)}`);
         if (r.ok) {
           const d = await r.json();
-          document.getElementById('counter').textContent = `🔢 Portes enregistrées (cette action) : ${d.total}`;
+          document.getElementById('counter').textContent = `🔢 Portes enregistrées : ${d.total}`;
         }
       } catch(e) {}
     }
@@ -317,17 +465,14 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             teamCode: state.accessCode,
-            cipherKey: state.cipherKey || state.accessCode,
-            building, floor, doorNumber,
-            interaction,
-            details
+            cipherKey: state.cipherKey,
+            building, floor, doorNumber, interaction, details
           })
         });
         const d = await r.json();
         if (!r.ok) throw new Error(d.error || 'Erreur');
 
         showStatus('success', '✅ Porte enregistrée !');
-        // Réinitialiser pour la porte suivante (garder l'immeuble par commodité)
         document.getElementById('floor').value = '';
         document.getElementById('doorNumber').value = '';
         document.getElementById('details').value = '';
@@ -340,48 +485,95 @@
     }
 
     // --- Compilation ---
-    async function loadCompil() {
-      if (!state.accessCode) { show('view-login'); return; }
+    function showCompil() {
+      // Vérifier si on a déjà une action + clé en session
+      if (state.actionId && state.cipherKey) {
+        doCompil();
+      } else {
+        show('view-compil-login');
+        document.getElementById('compilKey').focus();
+      }
+    }
+
+    async function doCompil() {
+      // Récupérer UUID + clé (URL ou session)
+      const pathMatch = window.location.pathname.match(/^\/action\/([0-9a-f-]+)$/i);
+      const params = new URLSearchParams(window.location.search);
+      const actionParam = params.get('action') || (pathMatch ? pathMatch[1] : null);
+      const keyParam = document.getElementById('compilKey').value.trim() || state.cipherKey;
+
+      let actionId = state.actionId || (actionParam && UUID_RE.test(actionParam) ? actionParam : null);
+      let key = keyParam;
+
+      if (!actionId) {
+        const url = prompt('Collez le lien de l\'action (il contient l\'ID) :');
+        if (!url) return;
+        try {
+          const u = new URL(url);
+          const a = u.searchParams.get('action') || u.pathname.match(/^\/action\/([0-9a-f-]+)$/i)?.[1];
+          if (a && UUID_RE.test(a)) actionId = a;
+          else { alert('Lien invalide.'); return; }
+        } catch(e){ alert('Lien invalide.'); return; }
+      }
+
+      if (!key) {
+        show('view-compil-login');
+        document.getElementById('compilKey').focus();
+        return;
+      }
+
+      state.actionId = actionId;
+      state.cipherKey = key;
+      saveState();
       show('view-compil');
+
       const statsEl = document.getElementById('compilStats');
       const tbody = document.querySelector('#compilTable tbody');
-      statsEl.innerHTML = '<p style="color:#888">Chargement...</p>';
+      statsEl.innerHTML = '<p class="muted">Chargement...</p>';
       tbody.innerHTML = '';
 
       try {
-        const r = await fetch(`/api/actions/${state.actionId || ''}/export?masterKey=${encodeURIComponent(state.accessCode)}`);
+        const r = await fetch(`/api/actions/${actionId}/export?masterKey=${encodeURIComponent(key)}`);
         const d = await r.json();
-        // Si pas d'action en session, regarder l'URL
-        if (!state.actionId && window.location.search.includes('action')) {
-          const p = new URLSearchParams(window.location.search);
-          state.actionId = parseInt(p.get('action'), 10);
-          return loadCompil();
-        }
         if (!r.ok) throw new Error(d.error || 'Erreur');
 
-        document.getElementById('compilTable').querySelector('thead tr').innerHTML =
-          '<th>Étage</th><th>N°</th><th>Immeuble</th><th>Interaction</th><th>Détails</th><th>Équipe</th><th>Heure</th>';
-
         statsEl.innerHTML = `
-          <div style="background:#fdecea;padding:12px;border-radius:8px;margin-bottom:12px">
-            <strong>${d.action.name}</strong><br>
-            <span style="font-size:.85rem">Total : <strong>${d.total}</strong> portes</span>
+          <div class="stats-box">
+            <div class="label">${d.action.name}</div>
+            <div class="big">${d.total}</div>
+            <div class="label">portes enregistrées</div>
           </div>`;
+
+        // Compter les interactions
+        const counts = {};
+        d.doors.forEach(x => { counts[x.interaction] = (counts[x.interaction]||0)+1; });
+        if (d.total > 0) {
+          let sum = '';
+          Object.entries(counts).forEach(([k,v]) => {
+            const label = (INTERACTIONS.find(i=>i.id===k)||{}).label || k;
+            sum += `<span style="background:#fdecea;color:#111;padding:4px 10px;border-radius:20px;font-size:.75rem;font-weight:700;margin:2px">${label} : ${v}</span> `;
+          });
+          statsEl.innerHTML += `<div style="margin-bottom:12px">${sum}</div>`;
+        }
+
+        document.querySelector('#compilTable thead tr').innerHTML =
+          '<th>Étage</th><th>N°</th><th>Immeuble</th><th>Interaction</th><th>Détails</th><th>Équipe</th><th>Heure</th>';
 
         d.doors.forEach(door => {
           const tr = document.createElement('tr');
+          const interLabel = (INTERACTIONS.find(i=>i.id===door.interaction)||{}).label || door.interaction || '';
           tr.innerHTML = `
             <td>${door.floor || ''}</td>
             <td>${door.doorNumber || ''}</td>
             <td>${door.building || ''}</td>
-            <td>${door.interaction || ''}</td>
+            <td>${interLabel}</td>
             <td>${door.details || ''}</td>
             <td>${door.team || ''}</td>
-            <td>${door.createdAt ? door.createdAt.slice(11,16) : ''}</td>`;
+            <td>${door.createdAt ? new Date(door.createdAt).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}) : ''}</td>`;
           tbody.appendChild(tr);
         });
       } catch (e) {
-        statsEl.innerHTML = `<div class="status error">Erreur : ${e.message} — (clé maître incorrecte ?)</div>`;
+        statsEl.innerHTML = `<div class="status error">Erreur : ${e.message}${e.message.includes('incorrecte') ? ' — vérifiez la clé maître.' : ''}</div>`;
       }
     }
 
@@ -412,10 +604,31 @@
       el.textContent = '';
     }
 
-    // --- Initialisation ---
-    // Si un lien avec ?action=ID est ouvert, aller direct en saisie après login
+    // --- Init ---
     (function init() {
-      if (state.accessCode) show('view-home');
+      // Si on arrive via un lien /action/UUID?key=..., aller direct en saisie
+      const pathMatch = window.location.pathname.match(/^\/action\/([0-9a-f-]+)$/i);
+      const params = new URLSearchParams(window.location.search);
+      const hasActionInUrl = (params.get('action') && UUID_RE.test(params.get('action'))) || pathMatch;
+
+      if (hasActionInUrl) {
+        const actionId = pathMatch ? pathMatch[1] : params.get('action');
+        state.actionId = actionId;
+        if (params.get('key')) state.cipherKey = decodeURIComponent(params.get('key'));
+        saveState();
+        // Si pas de code équipe → demander, sinon direct saisie
+        if (!state.accessCode) {
+          const code = prompt('Bienvenue ! Entrez votre code équipe (ex : EQUIPE-A3) :');
+          if (code && code.trim()) { state.accessCode = code.trim(); saveState(); initSaisie(); }
+          else { show('view-home'); }
+        } else {
+          initSaisie();
+        }
+      } else if (state.accessCode && state.actionId) {
+        initSaisie();
+      } else {
+        show('view-home');
+      }
     })();
   </script>
 </body>

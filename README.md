@@ -63,9 +63,11 @@ npm start   # ou : npm run dev
    - `SUPABASE_ANON_KEY`
 
 ## Utilisation
-1. **Créateur** : entre un nom d'action + crée une **clé maître** + un code équipe → obtient un lien à partager
-2. **Équipes** : ouvrent le lien, entrent leur **code d'équipe**, et saisissent les portes
-3. **Créateur** : avec sa clé maître, consulte la compilation et exporte en CSV
+1. **Créateur** : entre un nom d'action + crée une **clé maître** + un code équipe → obtient un lien `/action/<UUID>?key=... ` à partager
+2. **Équipes** : ouvrent le lien, entrent leur **code d'équipe** (ou le font à l'ouverture), et saisissent les portes
+3. **Créateur** : avec sa clé maître, consulte la compilation (stats + tableau) et exporte en CSV
+
+Chaque action a un **UUID unique** dans l'URL, ce qui rend le lien non devinable et propre à chaque campagne.
 
 ---
 *Fait avec ✊ pour les camarades de terrain.*
