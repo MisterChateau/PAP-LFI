@@ -63,11 +63,13 @@ npm start   # ou : npm run dev
    - `SUPABASE_ANON_KEY`
 
 ## Utilisation
-1. **Créateur** : entre un nom d'action + crée une **clé maître** + un code équipe → obtient un lien `/action/<UUID>?key=... ` à partager
-2. **Équipes** : ouvrent le lien, entrent leur **code d'équipe** (ou le font à l'ouverture), et saisissent les portes
-3. **Créateur** : avec sa clé maître, consulte la compilation (stats + tableau) et exporte en CSV
+1. **Créateur** : entre un nom d'action + une clé de chiffrement → obtient un lien `/action/<UUID>?key=... ` à partager
+2. **Équipes** : ouvrent le lien → saisissent directement les portes (pas de code requis)
+3. **Compilation** : n'importe qui ayant le lien/clé peut voir les résultats et exporter en CSV
 
-Chaque action a un **UUID unique** dans l'URL, ce qui rend le lien non devinable et propre à chaque campagne.
+> 🔑 **Modèle d'accès** : le lien (avec sa clé) **est l'accès**. Quiconque le détient peut saisir et consulter. À vous de le garder dans votre boucle d'action (groupe Telegram/WhatsApp). Un champ **équipe optionnel** (ex : A3) permet de tracer qui a saisi quoi.
+
+Chaque action a un **UUID unique** dans l'URL, ce qui rend le lien non devinable.
 
 ---
 *Fait avec ✊ pour les camarades de terrain.*

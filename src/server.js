@@ -91,9 +91,6 @@ app.post('/api/actions/:id/doors', async (req, res) => {
     if (!action) {
       return res.status(404).json({ error: 'Action introuvable.' });
     }
-    if (!teamCode || teamCode.length < 2) {
-      return res.status(400).json({ error: 'Un code équipe est requis.' });
-    }
     if (!cipherKey || cipherKey.length < 4) {
       return res.status(400).json({ error: 'La clé de chiffrement est requise.' });
     }
@@ -103,7 +100,7 @@ app.post('/api/actions/:id/doors', async (req, res) => {
 
     const { error } = await supabase.from('doors').insert({
       action_id: actionId,
-      team_hash: hashSecret(teamCode),
+      team_hash: teamCode ? hashSecret(teamCode) : null,
       building: building ? encrypt(building, cipherKey) : null,
       floor: encrypt(floor, cipherKey),
       door_number: encrypt(doorNumber, cipherKey),

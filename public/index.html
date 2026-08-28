@@ -9,7 +9,6 @@
   <style>
     :root {
       --lfi-red: #E1000F;
-      --lfi-red-dark: #B3000C;
       --lfi-black: #111111;
       --lfi-white: #ffffff;
       --lfi-gray: #666666;
@@ -21,9 +20,8 @@
       background: var(--lfi-white); color: var(--lfi-black); min-height: 100vh;
       padding-bottom: 90px;
     }
-    /* Bandeau militant */
     .hero {
-      background: var(--lfi-red); color: #fff; padding: 28px 20px 24px;
+      background: var(--lfi-red); color: #fff; padding: 26px 20px 22px;
       position: relative; overflow: hidden;
     }
     .hero::after {
@@ -32,7 +30,7 @@
     }
     .hero h1 {
       font-family: 'Anton', sans-serif; font-weight: 400;
-      font-size: 1.9rem; letter-spacing: 1px; text-transform: uppercase;
+      font-size: 1.8rem; letter-spacing: 1px; text-transform: uppercase;
       line-height: 1.05; position: relative; z-index: 1;
     }
     .hero p {
@@ -41,13 +39,12 @@
     }
     .hero .badge {
       display: inline-block; background: #fff; color: var(--lfi-red);
-      font-size: .7rem; font-weight: 800; letter-spacing: 1px;
+      font-size: .68rem; font-weight: 800; letter-spacing: 1px;
       padding: 3px 10px; border-radius: 20px; text-transform: uppercase;
       margin-top: 10px; position: relative; z-index: 1;
     }
     .container { max-width: 600px; margin: 0 auto; padding: 20px 16px; }
 
-    /* Cartes */
     .card {
       background: #fff; border: 1px solid #eee; border-radius: 14px;
       padding: 22px; margin-bottom: 16px;
@@ -55,7 +52,7 @@
     }
     h2 {
       font-family: 'Anton', sans-serif; font-weight: 400; text-transform: uppercase;
-      font-size: 1.2rem; letter-spacing: .5px; margin-bottom: 16px; color: var(--lfi-black);
+      font-size: 1.15rem; letter-spacing: .5px; margin-bottom: 16px; color: var(--lfi-black);
     }
     .section-tag {
       display: inline-block; background: var(--lfi-red); color: #fff;
@@ -63,7 +60,6 @@
       padding: 3px 10px; border-radius: 3px; text-transform: uppercase; margin-bottom: 10px;
     }
 
-    /* Formulaires */
     label { display: block; font-size: .82rem; font-weight: 700; margin-bottom: 6px; color: #333; text-transform: uppercase; letter-spacing: .5px; }
     input, select, textarea {
       width: 100%; padding: 15px 14px; border: 2px solid #ddd; border-radius: 10px;
@@ -72,7 +68,6 @@
     input:focus, select:focus, textarea:focus { border-color: var(--lfi-red); outline: none; background: #fff; }
     textarea { min-height: 70px; resize: vertical; }
 
-    /* Boutons */
     .btn {
       width: 100%; padding: 17px; border: none; border-radius: 12px;
       font-size: 1rem; font-weight: 800; cursor: pointer; letter-spacing: 1px;
@@ -85,7 +80,6 @@
     .btn:disabled { opacity: .5; cursor: not-allowed; }
     .btn.small { padding: 11px; font-size: .82rem; border-radius: 8px; }
 
-    /* Boutons d'accueil géants */
     .home-btn {
       width: 100%; padding: 24px; border: 2px solid var(--lfi-red); border-radius: 16px;
       background: #fff; color: var(--lfi-red); font-weight: 800; font-size: 1.15rem;
@@ -99,7 +93,6 @@
     .home-btn.dark:hover { background: var(--lfi-black); color: #fff; }
     .home-btn.dark:hover .sub { color: rgba(255,255,255,.8); }
 
-    /* Interactions */
     .interactions { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 16px; }
     .interaction {
       padding: 16px 10px; border: 2px solid #ddd; border-radius: 12px; text-align: center;
@@ -107,7 +100,6 @@
     }
     .interaction.selected { border-color: var(--lfi-red); background: #fdecea; color: var(--lfi-red); box-shadow: 0 0 0 2px rgba(225,0,15,.15); }
 
-    /* Statuts */
     .status { text-align: center; padding: 14px; border-radius: 10px; margin-bottom: 14px; font-weight: 700; display: none; }
     .status.success { background: #e8f5e9; color: #1a8a3a; display: block; }
     .status.error { background: #fdecea; color: #c62828; display: block; }
@@ -117,7 +109,6 @@
     .row > div { flex: 1; }
     .hidden { display: none !important; }
 
-    /* Boîte de lien partagé */
     .link-box {
       background: var(--lfi-light); border: 2px dashed #ccc; padding: 14px;
       border-radius: 10px; word-break: break-all; font-size: .85rem; margin: 12px 0;
@@ -125,23 +116,21 @@
     }
     .copy-btn { background: var(--lfi-black); color:#fff; border:none; padding:10px; border-radius:8px; font-weight:700; cursor:pointer; width:100%; margin-top:6px; }
 
-    /* Table compilation */
     .table-wrap { overflow-x: auto; border: 1px solid #eee; border-radius: 10px; }
     table { width: 100%; border-collapse: collapse; font-size: .82rem; }
     th, td { padding: 10px 8px; border-bottom: 1px solid #f0f0f0; text-align: left; }
     th { background: var(--lfi-black); color: #fff; position: sticky; top: 0; font-size: .72rem; text-transform: uppercase; letter-spacing: .5px; }
     tr:nth-child(even) { background: #fafafa; }
 
-    /* Stats */
     .stats-box { background: var(--lfi-red); color:#fff; padding:18px; border-radius:12px; margin-bottom:14px; }
     .stats-box .big { font-family:'Anton',sans-serif; font-size:2.2rem; line-height:1; }
     .stats-box .label { font-size:.8rem; opacity:.9; text-transform:uppercase; letter-spacing:1px; }
 
     .footer-note { text-align: center; font-size: .75rem; color: #aaa; padding: 14px 10px; }
     .footer-note .lock { color: var(--lfi-red); font-weight: 700; }
-
     .muted { color: #888; font-size: .85rem; }
-    .big-warning { background:#fff8e1; border-left:4px solid #f9a825; padding:12px; border-radius:6px; font-size:.85rem; margin-top:12px; }
+    .mini-toggle { text-align:center; margin-bottom:14px; }
+    .mini-toggle button { background:none; border:none; color:var(--lfi-red); font-weight:700; font-size:.85rem; text-decoration:underline; cursor:pointer; }
   </style>
 </head>
 <body>
@@ -153,20 +142,18 @@
 
   <div class="container">
 
-    <!-- Vue : accueil deux boutons -->
+    <!-- Vue : accueil (créer une action) -->
     <div id="view-home" class="hidden">
-      <button class="home-btn" onclick="startNewAction()">
+      <button class="home-btn" onclick="showCreate()">
         ➕ Créer une action
-        <span class="sub">Générer un lien pour les équipes</span>
+        <span class="sub">Générer un lien à partager dans votre groupe</span>
       </button>
-      <button class="home-btn dark" onclick="openSharedLink()">
-        🔗 Ouvrir un lien d'action
-        <span class="sub">Rejoindre une action partagée</span>
-      </button>
-      <div class="card" style="margin-top:6px">
-        <span class="section-tag">Compilation</span>
-        <p class="muted" style="margin-bottom:12px">Le créateur de l'action consulte ici les résultats.</p>
-        <button class="btn" onclick="showCompil()">📊 Voir la compilation</button>
+      <div class="card">
+        <span class="section-tag">Déjà un lien ?</span>
+        <p class="muted" style="margin-bottom:12px">
+          Si vous avez reçu un lien d'action, ouvrez-le directement — tout se passe dans le lien.
+        </p>
+        <button class="btn secondary" onclick="pasteLink()">🔗 Coller un lien d'action</button>
       </div>
     </div>
 
@@ -176,10 +163,11 @@
       <h2>➕ Créer une action</h2>
       <label>Nom de l'action</label>
       <input type="text" id="actionName" placeholder="Ex : Porte-à-porte Quartier Nord" autocomplete="off">
-      <label>Clé maître (pour déchiffrer les résultats)</label>
-      <input type="password" id="masterKey" placeholder="Choisissez une clé secrète (min 4 car.)" autocomplete="off">
-      <label>Code équipe (cette équipe)</label>
-      <input type="text" id="teamCodeCreate" placeholder="Ex : EQUIPE-A3" autocomplete="off">
+      <label>Clé de chiffrement (secrète)</label>
+      <input type="password" id="masterKey" placeholder="Choisissez une clé (min 4 car.)" autocomplete="off">
+      <p class="muted" style="margin-bottom:14px">
+        Cette clé est incluse dans le lien. Toute personne ayant le lien peut saisir et voir les résultats.
+      </p>
       <button class="btn green" onclick="createAction()">Créer l'action</button>
       <div id="createResult"></div>
       <button class="btn secondary" style="margin-top:12px" onclick="goHome()">↩️ Retour</button>
@@ -189,6 +177,7 @@
     <div id="view-saisie" class="card hidden">
       <div class="counter" id="counter"></div>
       <div class="status" id="status"></div>
+      <div class="mini-toggle"><button onclick="showCompil()">📊 Voir la compilation</button></div>
       <span class="section-tag">Saisie terrain</span>
       <h2>🚪 Nouvelle porte</h2>
       <div class="row">
@@ -205,19 +194,21 @@
       <input type="text" id="building" placeholder="Ex : 12 rue de la Paix">
       <label>Interaction</label>
       <div class="interactions" id="interactionsBox"></div>
+      <label>Équipe (optionnel — pour le suivi)</label>
+      <input type="text" id="team" placeholder="Ex : A3, B1..." autocomplete="off">
       <label>Détails / notes (optionnel)</label>
       <textarea id="details" placeholder="Infos complémentaires..."></textarea>
       <button class="btn" onclick="submitDoor()">💾 Enregistrer</button>
-      <button class="btn secondary" style="margin-top:10px" onclick="goHome()">↩️ Terminer</button>
     </div>
 
-    <!-- Vue : compilation créateur -->
+    <!-- Vue : compilation -->
     <div id="view-compil" class="card hidden">
+      <div class="mini-toggle"><button onclick="initSaisie()">🚪 Retour à la saisie</button></div>
       <span class="section-tag">Compilation</span>
       <h2>📊 Résultats</h2>
       <div id="compilStats"></div>
-      <div style="display:flex;gap:8px;margin-bottom:12px">
-        <button class="btn secondary small" onclick="exportCsv()">⬇️ CSV</button>
+      <div style="display:flex;gap:8px;margin-bottom:14px">
+        <button class="btn secondary small" onclick="exportCsv()">⬇️ Exporter CSV</button>
       </div>
       <div class="table-wrap">
         <table id="compilTable">
@@ -227,18 +218,6 @@
           <tbody></tbody>
         </table>
       </div>
-      <button class="btn secondary" style="margin-top:14px" onclick="goHome()">↩️ Retour</button>
-    </div>
-
-    <!-- Vue : demande de clé maître pour compilation -->
-    <div id="view-compil-login" class="card hidden">
-      <span class="section-tag">Compilation</span>
-      <h2>🔑 Clé maître requise</h2>
-      <p class="muted" style="margin-bottom:14px">Entrez la clé maître de l'action pour déchiffrer et voir les résultats.</p>
-      <label>Clé maître</label>
-      <input type="password" id="compilKey" placeholder="Clé secrète de l'action" autocomplete="off">
-      <button class="btn" onclick="doCompil()">Voir la compilation</button>
-      <button class="btn secondary" style="margin-top:10px" onclick="goHome()">↩️ Retour</button>
     </div>
 
   </div>
@@ -249,7 +228,6 @@
   </div>
 
   <script>
-    // --- Interactions ---
     const INTERACTIONS = [
       { id: 'pas-reponse', label: '📬 Pas de réponse' },
       { id: 'sympa', label: '😊 Sympathique' },
@@ -259,102 +237,65 @@
       { id: 'refus', label: '🙅 Refus / hostile' },
       { id: 'ne-sonne-pas', label: '♿ Ne sonne pas' }
     ];
-
-    // --- État ---
-    let state = {
-      accessCode: sessionStorage.getItem('pap_accessCode') || '',
-      cipherKey: sessionStorage.getItem('pap_cipherKey') || '',
-      actionId: sessionStorage.getItem('pap_actionId') || null, // UUID
-      selectedInteraction: null
-    };
-
-    function saveState() {
-      sessionStorage.setItem('pap_accessCode', state.accessCode);
-      sessionStorage.setItem('pap_cipherKey', state.cipherKey);
-      sessionStorage.setItem('pap_actionId', state.actionId || '');
-    }
-
     const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-    // --- Navigation ---
+    let state = {
+      actionId: sessionStorage.getItem('pap_actionId') || null,
+      cipherKey: sessionStorage.getItem('pap_cipherKey') || '',
+      selectedInteraction: null
+    };
+    function saveState() {
+      sessionStorage.setItem('pap_actionId', state.actionId || '');
+      sessionStorage.setItem('pap_cipherKey', state.cipherKey);
+    }
+
     function show(id) {
-      ['view-home','view-create','view-saisie','view-compil','view-compil-login'].forEach(v => {
+      ['view-home','view-create','view-saisie','view-compil'].forEach(v => {
         document.getElementById(v).classList.add('hidden');
       });
       document.getElementById(id).classList.remove('hidden');
     }
     function goHome() { show('view-home'); }
 
-    // --- Accueil : créer une action ---
-    function startNewAction() { show('view-create'); document.getElementById('createResult').innerHTML=''; }
+    function showCreate() { show('view-create'); document.getElementById('createResult').innerHTML=''; }
 
-    // --- Accueil : ouvrir un lien partagé ---
-    function openSharedLink() {
-      // Le lien est déjà dans l'URL (?action=UUID&key=...) quand on arrive via un lien partagé.
-      const params = new URLSearchParams(window.location.search);
-      const actionParam = params.get('action');
-      const keyParam = params.get('key');
-      if (actionParam && UUID_RE.test(actionParam)) {
-        state.actionId = actionParam;
-        if (keyParam) state.cipherKey = decodeURIComponent(keyParam);
-        saveState();
-        // Demander le code équipe si pas encore défini
-        if (!state.accessCode) {
-          const code = prompt('Entrez votre code équipe (ex : EQUIPE-A3) :');
-          if (code && code.trim()) {
-            state.accessCode = code.trim();
-            saveState();
-            initSaisie();
-          }
-        } else {
+    // Coller un lien
+    function pasteLink() {
+      const url = prompt('Collez le lien d\'action partagé :');
+      if (!url) return;
+      try {
+        const u = new URL(url);
+        const a = u.searchParams.get('action') || (u.pathname.match(/^\/action\/([0-9a-f-]+)$/i)||[])[1];
+        const k = u.searchParams.get('key');
+        if (a && UUID_RE.test(a)) {
+          state.actionId = a;
+          if (k) state.cipherKey = decodeURIComponent(k);
+          saveState();
           initSaisie();
-        }
-      } else {
-        const url = prompt('Collez le lien d\'action partagé :');
-        if (!url) return;
-        try {
-          const u = new URL(url);
-          const p = u.searchParams;
-          const a = p.get('action');
-          const k = p.get('key');
-          if (a && UUID_RE.test(a)) {
-            state.actionId = a;
-            if (k) state.cipherKey = decodeURIComponent(k);
-            saveState();
-            if (!state.accessCode) {
-              const code = prompt('Entrez votre code équipe :');
-              if (code && code.trim()) { state.accessCode = code.trim(); saveState(); initSaisie(); }
-            } else { initSaisie(); }
-          } else {
-            alert('Lien invalide : identifiant d\'action manquant.');
-          }
-        } catch(e) { alert('Lien invalide.'); }
-      }
+        } else { alert('Lien invalide : identifiant d\'action manquant.'); }
+      } catch(e) { alert('Lien invalide.'); }
     }
 
-    // --- Création d'action ---
+    // Créer une action
     async function createAction() {
       const name = document.getElementById('actionName').value.trim();
       const masterKey = document.getElementById('masterKey').value.trim();
-      const teamCode = document.getElementById('teamCodeCreate').value.trim();
       const resEl = document.getElementById('createResult');
 
-      if (!name || !masterKey || !teamCode) {
-        resEl.innerHTML = '<div class="status error">Remplissez tous les champs.</div>';
+      if (!name || !masterKey || masterKey.length < 4) {
+        resEl.innerHTML = '<div class="status error">Renseignez le nom et une clé (min 4 caractères).</div>';
         return;
       }
 
       try {
         const r = await fetch('/api/actions', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ name, masterKey })
         });
         const d = await r.json();
         if (!r.ok) throw new Error(d.error || 'Erreur');
 
         state.actionId = d.id;
-        state.accessCode = teamCode;
         state.cipherKey = masterKey;
         saveState();
 
@@ -362,16 +303,12 @@
         const link = `${base}/action/${d.id}?key=${encodeURIComponent(masterKey)}`;
         resEl.innerHTML = `
           <div class="status success">✅ Action créée !</div>
-          <p style="font-size:.9rem;font-weight:600;margin-bottom:6px">Lien à partager aux équipes :</p>
+          <p style="font-size:.9rem;font-weight:600;margin-bottom:6px">Voici le lien à partager dans votre groupe :</p>
           <div class="link-box">${link}</div>
           <button class="copy-btn" onclick="copyLink('${link.replace(/'/g,"\\'")}')">📋 Copier le lien</button>
           <p style="font-size:.8rem;color:#666;margin-top:10px">
-            Les équipes ouvrent ce lien, entrent leur code équipe puis saisissent les portes.
+            Toute personne ayant ce lien peut saisir et consulter les résultats. <strong>Gardez-le dans votre boucle d'action.</strong>
           </p>
-          <div class="big-warning">
-            🔑 <strong>Gardez précieusement votre clé maître "${masterKey}"</strong> : c'est elle qui déchiffre tout.
-            Sans elle, les données sont irrécupérables. Ne la partagez pas.
-          </div>
           <button class="btn secondary" style="margin-top:14px" onclick="initSaisie()">🚪 Commencer à saisir</button>
         `;
       } catch (e) {
@@ -384,9 +321,8 @@
       else { const t=document.createElement('textarea'); t.value=link; document.body.appendChild(t); t.select(); document.execCommand('copy'); document.body.removeChild(t); alert('Lien copié !'); }
     }
 
-    // --- Saisie de porte ---
+    // Saisie
     function initSaisie() {
-      // Récupérer l'action et la clé depuis l'URL (route /action/:uuid?key=)
       const pathMatch = window.location.pathname.match(/^\/action\/([0-9a-f-]+)$/i);
       const params = new URLSearchParams(window.location.search);
       const actionParam = params.get('action') || (pathMatch ? pathMatch[1] : null);
@@ -398,17 +334,17 @@
         saveState();
       }
 
-      if (!state.accessCode) { openSharedLink(); return; }
       if (!state.actionId || !UUID_RE.test(state.actionId)) {
-        alert('Aucune action en cours. Créez ou ouvrez un lien d\'action.');
+        alert('Aucun lien d\'action. Créez une action ou collez un lien.');
+        goHome(); return;
+      }
+      if (!state.cipherKey) {
+        alert('Clé manquante dans le lien. Vérifiez le lien partagé.');
         goHome(); return;
       }
 
       state.selectedInteraction = null;
-      document.getElementById('floor').value='';
-      document.getElementById('doorNumber').value='';
-      document.getElementById('building').value='';
-      document.getElementById('details').value='';
+      ['floor','doorNumber','building','team','details'].forEach(id => document.getElementById(id).value='');
       hideStatus();
       renderInteractions();
       updateCounter();
@@ -433,7 +369,7 @@
     }
 
     async function updateCounter() {
-      if (!state.actionId) return;
+      if (!state.actionId || !state.cipherKey) return;
       try {
         const r = await fetch(`/api/actions/${state.actionId}/export?masterKey=${encodeURIComponent(state.cipherKey)}`);
         if (r.ok) {
@@ -448,6 +384,7 @@
       const doorNumber = document.getElementById('doorNumber').value.trim();
       const building = document.getElementById('building').value.trim();
       const details = document.getElementById('details').value.trim();
+      const team = document.getElementById('team').value.trim();
       const interaction = state.selectedInteraction;
 
       if (!floor && !doorNumber) {
@@ -461,10 +398,9 @@
 
       try {
         const r = await fetch(`/api/actions/${state.actionId}/doors`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            teamCode: state.accessCode,
+            teamCode: team || null,
             cipherKey: state.cipherKey,
             building, floor, doorNumber, interaction, details
           })
@@ -484,47 +420,9 @@
       }
     }
 
-    // --- Compilation ---
-    function showCompil() {
-      // Vérifier si on a déjà une action + clé en session
-      if (state.actionId && state.cipherKey) {
-        doCompil();
-      } else {
-        show('view-compil-login');
-        document.getElementById('compilKey').focus();
-      }
-    }
-
-    async function doCompil() {
-      // Récupérer UUID + clé (URL ou session)
-      const pathMatch = window.location.pathname.match(/^\/action\/([0-9a-f-]+)$/i);
-      const params = new URLSearchParams(window.location.search);
-      const actionParam = params.get('action') || (pathMatch ? pathMatch[1] : null);
-      const keyParam = document.getElementById('compilKey').value.trim() || state.cipherKey;
-
-      let actionId = state.actionId || (actionParam && UUID_RE.test(actionParam) ? actionParam : null);
-      let key = keyParam;
-
-      if (!actionId) {
-        const url = prompt('Collez le lien de l\'action (il contient l\'ID) :');
-        if (!url) return;
-        try {
-          const u = new URL(url);
-          const a = u.searchParams.get('action') || u.pathname.match(/^\/action\/([0-9a-f-]+)$/i)?.[1];
-          if (a && UUID_RE.test(a)) actionId = a;
-          else { alert('Lien invalide.'); return; }
-        } catch(e){ alert('Lien invalide.'); return; }
-      }
-
-      if (!key) {
-        show('view-compil-login');
-        document.getElementById('compilKey').focus();
-        return;
-      }
-
-      state.actionId = actionId;
-      state.cipherKey = key;
-      saveState();
+    // Compilation
+    async function showCompil() {
+      if (!state.actionId || !state.cipherKey) { alert('Ouvrez d\'abord un lien d\'action.'); return; }
       show('view-compil');
 
       const statsEl = document.getElementById('compilStats');
@@ -533,7 +431,7 @@
       tbody.innerHTML = '';
 
       try {
-        const r = await fetch(`/api/actions/${actionId}/export?masterKey=${encodeURIComponent(key)}`);
+        const r = await fetch(`/api/actions/${state.actionId}/export?masterKey=${encodeURIComponent(state.cipherKey)}`);
         const d = await r.json();
         if (!r.ok) throw new Error(d.error || 'Erreur');
 
@@ -544,7 +442,6 @@
             <div class="label">portes enregistrées</div>
           </div>`;
 
-        // Compter les interactions
         const counts = {};
         d.doors.forEach(x => { counts[x.interaction] = (counts[x.interaction]||0)+1; });
         if (d.total > 0) {
@@ -573,7 +470,7 @@
           tbody.appendChild(tr);
         });
       } catch (e) {
-        statsEl.innerHTML = `<div class="status error">Erreur : ${e.message}${e.message.includes('incorrecte') ? ' — vérifiez la clé maître.' : ''}</div>`;
+        statsEl.innerHTML = `<div class="status error">Erreur : ${e.message}${e.message.includes('incorrecte') ? ' — vérifiez la clé.' : ''}</div>`;
       }
     }
 
@@ -592,7 +489,6 @@
       a.click();
     }
 
-    // --- Utilitaires ---
     function showStatus(type, msg) {
       const el = document.getElementById('status');
       el.className = 'status ' + type;
@@ -604,27 +500,18 @@
       el.textContent = '';
     }
 
-    // --- Init ---
+    // Init : si lien /action/UUID?key= → direct saisie
     (function init() {
-      // Si on arrive via un lien /action/UUID?key=..., aller direct en saisie
       const pathMatch = window.location.pathname.match(/^\/action\/([0-9a-f-]+)$/i);
       const params = new URLSearchParams(window.location.search);
-      const hasActionInUrl = (params.get('action') && UUID_RE.test(params.get('action'))) || pathMatch;
+      const actionParam = params.get('action') || (pathMatch ? pathMatch[1] : null);
+      const keyParam = params.get('key');
 
-      if (hasActionInUrl) {
-        const actionId = pathMatch ? pathMatch[1] : params.get('action');
-        state.actionId = actionId;
-        if (params.get('key')) state.cipherKey = decodeURIComponent(params.get('key'));
-        saveState();
-        // Si pas de code équipe → demander, sinon direct saisie
-        if (!state.accessCode) {
-          const code = prompt('Bienvenue ! Entrez votre code équipe (ex : EQUIPE-A3) :');
-          if (code && code.trim()) { state.accessCode = code.trim(); saveState(); initSaisie(); }
-          else { show('view-home'); }
-        } else {
-          initSaisie();
-        }
-      } else if (state.accessCode && state.actionId) {
+      if (actionParam && UUID_RE.test(actionParam)) {
+        state.actionId = actionParam;
+        if (keyParam) { state.cipherKey = decodeURIComponent(keyParam); saveState(); }
+        initSaisie();
+      } else if (state.actionId && state.cipherKey) {
         initSaisie();
       } else {
         show('view-home');
