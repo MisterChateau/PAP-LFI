@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>PAP-LFI — Porte-à-Porte</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f5f5f5; color: #1a1a1a; min-height: 100vh; padding-bottom: 80px;
+    }
+    .header {
+      background: #e1000f; color: #fff; padding: 16px 20px; text-align: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,.15);
+    }
+    .header h1 { font-size: 1.4rem; letter-spacing: .5px; }
+    .header p { font-size: .85rem; opacity: .9; margin-top: 2px; }
+    .container { max-width: 560px; margin: 0 auto; padding: 16px; }
+    .card {
+      background: #fff; border-radius: 12px; padding: 20px; margin-bottom: 16px;
+      box-shadow: 0 1px 4px rgba(0,0,0,.08);
+    }
+    h2 { font-size: 1.1rem; margin-bottom: 12px; color: #e1000f; }
+    label { display: block; font-size: .9rem; font-weight: 600; margin-bottom: 6px; color: #333; }
+    input, select, textarea {
+      width: 100%; padding: 14px; border: 2px solid #ddd; border-radius: 8px;
+      font-size: 1rem; margin-bottom: 14px; background: #fafafa;
+    }
+    input:focus, select:focus, textarea:focus { border-color: #e1000f; outline: none; background: #fff; }
+    textarea { min-height: 70px; resize: vertical; }
+    .btn {
+      width: 100%; padding: 16px; border: none; border-radius: 10px;
+      font-size: 1.05rem; font-weight: 700; cursor: pointer;
+      background: #e1000f; color: #fff; transition: transform .1s, opacity .2s;
+    }
+    .btn:active { transform: scale(.97); }
+    .btn.secondary { background: #333; }
+    .btn.green { background: #1a8a3a; }
+    .btn:disabled { opacity: .5; cursor: not-allowed; }
+    .interactions { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 14px; }
+    .interaction {
+      padding: 14px 10px; border: 2px solid #ddd; border-radius: 10px; text-align: center;
+      cursor: pointer; font-weight: 600; font-size: .9rem; background: #fafafa; transition: all .15s;
+    }
+    .interaction.selected { border-color: #e1000f; background: #fdecea; color: #e1000f; }
+    .status { text-align: center; padding: 12px; border-radius: 8px; margin-bottom: 12px; font-weight: 600; display: none; }
+    .status.success { background: #e8f5e9; color: #1a8a3a; display: block; }
+    .status.error { background: #fdecea; color: #c62828; display: block; }
+    .counter { text-align: center; font-size: .9rem; color: #666; margin-bottom: 8px; }
+    .row { display: flex; gap: 10px; }
+    .row > div { flex: 1; }
+    .hidden { display: none !important; }
+    .link-box { background: #f0f0f0; padding: 12px; border-radius: 8px; word-break: break-all; font-size: .85rem; margin: 10px 0; }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+    th, td { padding: 8px; border-bottom: 1px solid #eee; text-align: left; }
+    th { background: #f7f7f7; position: sticky; top: 0; }
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: .75rem; font-weight: 700; }
+    .footer-note { text-align: center; font-size: .75rem; color: #999; padding: 10px; }
+    .btn.small { padding: 10px; font-size: .9rem; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>✊ PAP-LFI</h1>
+    <p>Porte-à-porte — Saisie terrain</p>
+  </div>
+
+  <div class="container">
+
+    <!-- Vue : login équipe / créateur -->
+    <div id="view-login" class="card">
+      <h2>Accès</h2>
+      <label>Code d'accès</label>
+      <input type="password" id="accessCode" placeholder="Code équipe ou clé maître" autocomplete="off">
+      <button class="btn" onclick="handleLogin()">Se connecter</button>
+      <p style="font-size:.8rem;color:#888;margin-top:10px">
+        💡 Les équipes utilisent leur code d'équipe. Le créateur de l'action utilise sa clé maître pour voir la compilation.
+      </p>
+    </div>
+
+    <!-- Vue : créer une action -->
+    <div id="view-create" class="card hidden">
+      <h2>➕ Nouvelle action</h2>
+      <label>Nom de l'action</label>
+      <input type="text" id="actionName" placeholder="Ex : Porte-à-porte Quartier Nord, dim. 07/09">
+      <label>Clé maître (pour consulter les résultats)</label>
+      <input type="password" id="masterKey" placeholder="Choisissez une clé secrète (min 4 car.)" autocomplete="off">
+      <label>Code équipe (pour cette équipe)</label>
+      <input type="text" id="teamCodeCreate" placeholder="Ex : EQUIPE-A3" autocomplete="off">
+      <button class="btn green" onclick="createAction()">Créer l'action</button>
+      <div id="createResult"></div>
+    </div>
+
+    <!-- Vue : saisie porte -->
+    <div id="view-saisie" class="card hidden">
+      <div class="counter" id="counter"></div>
+      <div class="status" id="status"></div>
+      <h2>🚪 Nouvelle porte</h2>
+      <div class="row">
+        <div>
+          <label>Étage</label>
+          <input type="text" id="floor" placeholder="Ex : 3" inputmode="numeric">
+        </div>
+        <div>
+          <label>N° porte</label>
+          <input type="text" id="doorNumber" placeholder="Ex : 12 ou B" >
+        </div>
+      </div>
+      <label>Immeuble / rue (optionnel)</label>
+      <input type="text" id="building" placeholder="Ex : 12 rue de la Paix">
+      <label>Interaction</label>
+      <div class="interactions" id="interactionsBox"></div>
+      <label>Détails / notes (optionnel)</label>
+      <textarea id="details" placeholder="Infos complémentaires..."></textarea>
+      <button class="btn" onclick="submitDoor()">💾 Enregistrer</button>
+      <button class="btn secondary" style="margin-top:10px" onclick="logout()">🚪 Changer d'accès</button>
+    </div>
+
+    <!-- Vue : compilation créateur -->
+    <div id="view-compil" class="card hidden">
+      <h2>📊 Compilation</h2>
+      <div id="compilStats"></div>
+      <button class="btn secondary small" onclick="exportCsv()" style="margin-bottom:12px">⬇️ Exporter CSV</button>
+      <div class="table-wrap">
+        <table id="compilTable">
+          <thead>
+            <tr><th>Étage</th><th>N°</th><th>Immeuble</th><th>Interaction</th><th>Détails</th><th>Équipe</th><th>Heure</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <button class="btn secondary" style="margin-top:14px" onclick="logout()">↩️ Retour</button>
+    </div>
+
+    <!-- Vue : accueil deux boutons -->
+    <div id="view-home" class="card hidden">
+      <h2>Bienvenue</h2>
+      <p style="margin-bottom:16px;color:#555">Que voulez-vous faire ?</p>
+      <button class="btn" onclick="showCreate()">➕ Créer une action</button>
+      <button class="btn secondary" style="margin-top:12px" onclick="showSaisie()">🚪 Saisir des portes</button>
+      <button class="btn green" style="margin-top:12px" onclick="showCompil()">📊 Voir la compilation</button>
+    </div>
+
+  </div>
+
+  <div class="footer-note">PAP-LFI — Données chiffrées de bout en bout.<br>🔒 Même si le serveur est compromis, vos données restent illisibles.</div>
+
+  <script>
+    // --- Configuration ---
+    const INTERACTIONS = [
+      { id: 'pas-reponse', label: '📬 Pas de réponse', color: '#888' },
+      { id: 'sympa', label: '😊 Sympathique', color: '#2e7d32' },
+      { id: 'interesse', label: '🤝 Intéressé·e', color: '#1565c0' },
+      { id: 'adherent', label: '❤️ Adhérent·e', color: '#c62828' },
+      { id: 'indecis', label: '🗳️ Indécis·e', color: '#f9a825' },
+      { id: 'refus', label: '🙅 Refus / hostile', color: '#6a1b9a' },
+      { id: 'ne-sonne-pas', label: '♿ Ne sonne pas', color: '#546e7a' }
+    ];
+
+    // État local (sessionStorage pour persister pendant la session)
+    let state = {
+      accessCode: sessionStorage.getItem('pap_accessCode') || '',
+      cipherKey: sessionStorage.getItem('pap_cipherKey') || '',
+      actionId: sessionStorage.getItem('pap_actionId') || null,
+      selectedInteraction: null
+    };
+
+    function saveState() {
+      sessionStorage.setItem('pap_accessCode', state.accessCode);
+      sessionStorage.setItem('pap_cipherKey', state.cipherKey);
+      sessionStorage.setItem('pap_actionId', state.actionId || '');
+    }
+
+    // --- Navigation ---
+    function show(id) {
+      ['view-login','view-create','view-saisie','view-compil','view-home'].forEach(v => {
+        document.getElementById(v).classList.add('hidden');
+      });
+      document.getElementById(id).classList.remove('hidden');
+    }
+
+    function handleLogin() {
+      const code = document.getElementById('accessCode').value.trim();
+      if (!code) { showStatus('error', 'Entrez un code.'); return; }
+      state.accessCode = code;
+      saveState();
+      show('view-home');
+      document.getElementById('accessCode').value = '';
+    }
+
+    function showCreate() { show('view-create'); document.getElementById('createResult').innerHTML=''; }
+    function showSaisie() { initSaisie(); }
+    function showCompil() { loadCompil(); }
+
+    function logout() {
+      state.accessCode = '';
+      state.actionId = null;
+      state.cipherKey = '';
+      state.selectedInteraction = null;
+      sessionStorage.clear();
+      show('view-login');
+    }
+
+    // --- Création d'action ---
+    async function createAction() {
+      const name = document.getElementById('actionName').value.trim();
+      const masterKey = document.getElementById('masterKey').value.trim();
+      const teamCode = document.getElementById('teamCodeCreate').value.trim();
+      const resEl = document.getElementById('createResult');
+
+      if (!name || !masterKey || !teamCode) {
+        resEl.innerHTML = '<div class="status error">Remplissez tous les champs.</div>';
+        return;
+      }
+
+      try {
+        const r = await fetch('/api/actions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, masterKey })
+        });
+        const d = await r.json();
+        if (!r.ok) throw new Error(d.error || 'Erreur');
+
+        state.actionId = d.id;
+        state.accessCode = teamCode; // l'équipe utilise son code
+        state.cipherKey = masterKey; // la clé maître sert de clé de chiffrement
+        saveState();
+
+        const base = window.location.origin;
+        resEl.innerHTML = `
+          <div class="status success">✅ Action créée !</div>
+          <p style="font-size:.9rem;margin-bottom:6px">Partagez ce lien aux équipes (il contient la clé de chiffrement) :</p>
+          <div class="link-box">${base}/?action=${d.id}&key=${encodeURIComponent(masterKey)}</div>
+          <p style="font-size:.8rem;color:#888">Les équipes ouvrent le lien, entrent leur code d'équipe puis saisissent les portes.</p>
+          <p style="font-size:.8rem;color:#c62828;margin-top:6px">🔑 Gardez précieusement votre clé maître "${masterKey}" : c'est elle qui déchiffre tout. Sans elle, les données sont irrécupérables.</p>
+        `;
+      } catch (e) {
+        resEl.innerHTML = `<div class="status error">Erreur : ${e.message}</div>`;
+      }
+    }
+
+    // --- Saisie de porte ---
+    function initSaisie() {
+      // Récupérer l'action et la clé depuis l'URL si présentes
+      const params = new URLSearchParams(window.location.search);
+      const actionParam = params.get('action');
+      const keyParam = params.get('key');
+      if (actionParam) state.actionId = parseInt(actionParam, 10);
+      if (keyParam) state.cipherKey = decodeURIComponent(keyParam);
+      saveState();
+
+      if (!state.accessCode) { show('view-login'); return; }
+      if (!state.actionId) { show('view-home'); return; }
+
+      state.selectedInteraction = null;
+      document.getElementById('floor').value='';
+      document.getElementById('doorNumber').value='';
+      document.getElementById('building').value='';
+      document.getElementById('details').value='';
+      hideStatus();
+      renderInteractions();
+      updateCounter();
+      show('view-saisie');
+    }
+
+    function renderInteractions() {
+      const box = document.getElementById('interactionsBox');
+      box.innerHTML = '';
+      INTERACTIONS.forEach(i => {
+        const el = document.createElement('div');
+        el.className = 'interaction';
+        el.textContent = i.label;
+        el.dataset.id = i.id;
+        el.onclick = () => {
+          box.querySelectorAll('.interaction').forEach(x => x.classList.remove('selected'));
+          el.classList.add('selected');
+          state.selectedInteraction = i.id;
+        };
+        box.appendChild(el);
+      });
+    }
+
+    async function updateCounter() {
+      if (!state.actionId) return;
+      try {
+        // Comptage côté client via l'export (simple) — on compte seulement en local pour l'instant
+        const r = await fetch(`/api/actions/${state.actionId}/export?masterKey=${encodeURIComponent(state.accessCode)}`);
+        if (r.ok) {
+          const d = await r.json();
+          document.getElementById('counter').textContent = `🔢 Portes enregistrées (cette action) : ${d.total}`;
+        }
+      } catch(e) {}
+    }
+
+    async function submitDoor() {
+      const floor = document.getElementById('floor').value.trim();
+      const doorNumber = document.getElementById('doorNumber').value.trim();
+      const building = document.getElementById('building').value.trim();
+      const details = document.getElementById('details').value.trim();
+      const interaction = state.selectedInteraction;
+
+      if (!floor && !doorNumber) {
+        showStatus('error', 'Indiquez au moins l\'étage ou le n° de porte.');
+        return;
+      }
+      if (!interaction) {
+        showStatus('error', 'Choisissez un type d\'interaction.');
+        return;
+      }
+
+      try {
+        const r = await fetch(`/api/actions/${state.actionId}/doors`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            teamCode: state.accessCode,
+            cipherKey: state.cipherKey || state.accessCode,
+            building, floor, doorNumber,
+            interaction,
+            details
+          })
+        });
+        const d = await r.json();
+        if (!r.ok) throw new Error(d.error || 'Erreur');
+
+        showStatus('success', '✅ Porte enregistrée !');
+        // Réinitialiser pour la porte suivante (garder l'immeuble par commodité)
+        document.getElementById('floor').value = '';
+        document.getElementById('doorNumber').value = '';
+        document.getElementById('details').value = '';
+        state.selectedInteraction = null;
+        renderInteractions();
+        updateCounter();
+      } catch (e) {
+        showStatus('error', 'Erreur : ' + e.message);
+      }
+    }
+
+    // --- Compilation ---
+    async function loadCompil() {
+      if (!state.accessCode) { show('view-login'); return; }
+      show('view-compil');
+      const statsEl = document.getElementById('compilStats');
+      const tbody = document.querySelector('#compilTable tbody');
+      statsEl.innerHTML = '<p style="color:#888">Chargement...</p>';
+      tbody.innerHTML = '';
+
+      try {
+        const r = await fetch(`/api/actions/${state.actionId || ''}/export?masterKey=${encodeURIComponent(state.accessCode)}`);
+        const d = await r.json();
+        // Si pas d'action en session, regarder l'URL
+        if (!state.actionId && window.location.search.includes('action')) {
+          const p = new URLSearchParams(window.location.search);
+          state.actionId = parseInt(p.get('action'), 10);
+          return loadCompil();
+        }
+        if (!r.ok) throw new Error(d.error || 'Erreur');
+
+        document.getElementById('compilTable').querySelector('thead tr').innerHTML =
+          '<th>Étage</th><th>N°</th><th>Immeuble</th><th>Interaction</th><th>Détails</th><th>Équipe</th><th>Heure</th>';
+
+        statsEl.innerHTML = `
+          <div style="background:#fdecea;padding:12px;border-radius:8px;margin-bottom:12px">
+            <strong>${d.action.name}</strong><br>
+            <span style="font-size:.85rem">Total : <strong>${d.total}</strong> portes</span>
+          </div>`;
+
+        d.doors.forEach(door => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${door.floor || ''}</td>
+            <td>${door.doorNumber || ''}</td>
+            <td>${door.building || ''}</td>
+            <td>${door.interaction || ''}</td>
+            <td>${door.details || ''}</td>
+            <td>${door.team || ''}</td>
+            <td>${door.createdAt ? door.createdAt.slice(11,16) : ''}</td>`;
+          tbody.appendChild(tr);
+        });
+      } catch (e) {
+        statsEl.innerHTML = `<div class="status error">Erreur : ${e.message} — (clé maître incorrecte ?)</div>`;
+      }
+    }
+
+    function exportCsv() {
+      const tbody = document.querySelector('#compilTable tbody');
+      const rows = [...tbody.querySelectorAll('tr')];
+      let csv = 'Étage;N°;Immeuble;Interaction;Détails;Équipe;Heure\n';
+      rows.forEach(tr => {
+        const cols = [...tr.querySelectorAll('td')].map(td => '"' + (td.textContent||'').replace(/"/g,'""') + '"');
+        csv += cols.join(';') + '\n';
+      });
+      const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'pap-lfi-compilation.csv';
+      a.click();
+    }
+
+    // --- Utilitaires ---
+    function showStatus(type, msg) {
+      const el = document.getElementById('status');
+      el.className = 'status ' + type;
+      el.textContent = msg;
+    }
+    function hideStatus() {
+      const el = document.getElementById('status');
+      el.className = 'status';
+      el.textContent = '';
+    }
+
+    // --- Initialisation ---
+    // Si un lien avec ?action=ID est ouvert, aller direct en saisie après login
+    (function init() {
+      if (state.accessCode) show('view-home');
+    })();
+  </script>
+</body>
+</html>
