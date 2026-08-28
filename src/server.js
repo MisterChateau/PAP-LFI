@@ -21,6 +21,30 @@ const { createToken, decodeToken } = require('./link');
 const app = express();
 app.use(express.json({ limit: '1mb' }));
 
+// --- Sanitisation des entrées ---
+// Nettoie une chaîne : retire caractères de contrôle, balises HTML, tronque.
+function sanitizeInput(value, maxLen = 200) {
+  if (typeof value !== 'string') return '';
+  // Retirer caractères de contrôle (hors tabulation/newline)
+  let cleaned = value.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, '');
+  // Retirer les balises HTML (< >) pour éviter tout XSS
+  cleaned = cleaned.replace(/<[^>]*>/g, '');
+  // Remplacer plusieurs espaces par un seul, trim
+  cleaned = cleaned.replace(/\s+/g, ' ').trim();
+  // Limiter la longueur
+  if (cleaned.length > maxLen) cleaned = cleaned.slice(0, maxLen);
+  return cleaned;
+}
+
+// Force un type attendu (floor/number -> chaîne courte sans caractères dangereux)
+function sanitizeCode(value, maxLen = 50) {
+  if (typeof value !== 'string') return '';
+  let v = value.replace(/[^\w\-\u00C0-\u017F\s]/g, ''); // alphanum + accents + tiret/underscore
+  v = v.replace(/\s+/g, ' ').trim();
+  if (v.length > maxLen) v = v.slice(0, maxLen);
+  return v;
+}
+
 // --- Servir les fichiers statiques (front) ---
 app.use(express.static(path.join(__dirname, '..', 'public')));
 
@@ -66,7 +90,8 @@ function isValidUUID(v) { return typeof v === 'string' && UUID_RE.test(v); }
 app.post('/api/actions', async (req, res) => {
   try {
     const { name } = req.body || {};
-    if (!name || !name.trim()) {
+    const cleanName = sanitizeInput(name, 150);
+    if (!cleanName) {
       return res.status(400).json({ error: 'Le nom de l\'action est requis.' });
     }
 
@@ -75,7 +100,7 @@ app.post('/api/actions', async (req, res) => {
 
     const { data, error } = await supabase
       .from('actions')
-      .insert({ name: name.trim(), master_key_hash: hashSecret(masterKey) })
+      .insert({ name: cleanName, master_key_hash: hashSecret(masterKey) })
       .select()
       .single();
 
@@ -107,6 +132,14 @@ app.post('/api/actions/:id/doors', async (req, res) => {
     }
     const { teamCode, cipherKey, building, floor, doorNumber, interaction, details } = req.body || {};
 
+    // Sanitiser les entrées utilisateur
+    const sFloor = sanitizeCode(floor, 20);
+    const sDoor = sanitizeCode(doorNumber, 20);
+    const sBuilding = sanitizeInput(building, 200);
+    const sDetails = sanitizeInput(details, 1000);
+    const sInteraction = sanitizeCode(interaction, 50);
+    const sTeam = sanitizeCode(teamCode, 50);
+
     // Vérifier que l'action existe
     const { data: action, error: errAction } = await supabase
       .from('actions')
@@ -121,18 +154,18 @@ app.post('/api/actions/:id/doors', async (req, res) => {
     if (!cipherKey || cipherKey.length < 4) {
       return res.status(400).json({ error: 'La clé de chiffrement est requise.' });
     }
-    if (!floor && !doorNumber) {
+    if (!sFloor && !sDoor) {
       return res.status(400).json({ error: 'Précisez au moins l\'étage ou le numéro de porte.' });
     }
 
     const { error } = await supabase.from('doors').insert({
       action_id: actionId,
-      team_hash: teamCode ? hashSecret(teamCode) : null,
-      building: building ? encrypt(building, cipherKey) : null,
-      floor: encrypt(floor, cipherKey),
-      door_number: encrypt(doorNumber, cipherKey),
-      interaction: interaction ? encrypt(interaction, cipherKey) : null,
-      details: details ? encrypt(details, cipherKey) : null
+      team_hash: sTeam ? hashSecret(sTeam) : null,
+      building: sBuilding ? encrypt(sBuilding, cipherKey) : null,
+      floor: encrypt(sFloor, cipherKey),
+      door_number: encrypt(sDoor, cipherKey),
+      interaction: sInteraction ? encrypt(sInteraction, cipherKey) : null,
+      details: sDetails ? encrypt(sDetails, cipherKey) : null
     });
 
     if (error) throw error;

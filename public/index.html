@@ -71,8 +71,9 @@
     /* ===== BARRE ACTION (lien ouvert) ===== */
     .action-bar {
       display: flex; align-items: center; justify-content: space-between;
-      background: var(--lfi-black); color: #fff; padding: 11px 16px; gap: 10px;
-      position: sticky; top: 0; z-index: 50; border-bottom: 3px solid var(--lfi-red);
+      background: var(--lfi-black); color: #fff; padding: 12px 16px; gap: 10px;
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 50;
+      border-top: 3px solid var(--lfi-red); box-shadow: 0 -4px 16px rgba(0,0,0,.25);
     }
     .action-bar .name { font-weight: 700; font-size: .88rem; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #fff; }
     .action-bar .name .dot { color: var(--lfi-red); }
@@ -358,6 +359,11 @@
       actionId: null, cipherKey: '', actionName: '', selectedInteraction: null
     };
 
+    // Encodage HTML (anti-XSS) pour tout affichage via innerHTML
+    function esc(v) {
+      return String(v == null ? '' : v).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+
     function show(id) {
       ['view-home','view-create','view-action'].forEach(v => document.getElementById(v).classList.add('hidden'));
       document.getElementById(id).classList.remove('hidden');
@@ -417,7 +423,7 @@
       show('view-action'); showTab('saisie');
       try {
         const r = await fetch(`/api/actions/${state.actionId}/export?masterKey=${encodeURIComponent(state.cipherKey)}`);
-        if (r.ok) { const d = await r.json(); state.actionName = d.action.name; document.getElementById('actionBarName').innerHTML = '<span class="dot">●</span> ' + d.action.name; }
+        if (r.ok) { const d = await r.json(); state.actionName = d.action.name; document.getElementById('actionBarName').innerHTML = '<span class="dot">●</span> ' + esc(d.action.name); }
       } catch(e) {}
       state.selectedInteraction = null;
       ['floor','doorNumber','building','team','details'].forEach(id => document.getElementById(id).value='');
@@ -479,7 +485,7 @@
         if (!r.ok) throw new Error(d.error || 'Erreur');
         statsEl.innerHTML = `
           <div class="stats-box">
-            <div class="label">${d.action.name}</div>
+            <div class="label">${esc(d.action.name)}</div>
             <div class="big">${d.total}</div>
             <div class="label">portes enregistrées</div>
           </div>`;
@@ -491,10 +497,11 @@
           sum += '</div>'; statsEl.innerHTML += sum;
         }
         document.querySelector('#compilTable thead tr').innerHTML = '<th>Étage</th><th>N°</th><th>Immeuble</th><th>Interaction</th><th>Détails</th><th>Équipe</th><th>Heure</th>';
+        // Encodage HTML de chaque valeur pour éviter tout XSS à l'affichage
         d.doors.forEach(door => {
           const tr = document.createElement('tr');
           const interLabel = (INTERACTIONS.find(i=>i.id===door.interaction)||{}).label || door.interaction || '';
-          tr.innerHTML = `<td>${door.floor||''}</td><td>${door.doorNumber||''}</td><td>${door.building||''}</td><td>${interLabel}</td><td>${door.details||''}</td><td>${door.team||''}</td><td>${door.createdAt?new Date(door.createdAt).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}):''}</td>`;
+          tr.innerHTML = `<td>${esc(door.floor)}</td><td>${esc(door.doorNumber)}</td><td>${esc(door.building)}</td><td>${esc(interLabel)}</td><td>${esc(door.details)}</td><td>${esc(door.team)}</td><td>${door.createdAt?new Date(door.createdAt).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}):''}</td>`;
           tbody.appendChild(tr);
         });
       } catch (e) { statsEl.innerHTML = `<div class="status error">Erreur : ${e.message}${e.message.includes('incorrecte')?' — vérifiez la clé.':''}</div>`; }
