@@ -15,3 +15,5 @@ services:
       #   value: https://VOTRE-PROJET.supabase.co
       # - key: SUPABASE_ANON_KEY
       #   value: votre-clé-anon
+      # - key: APP_SECRET
+      #   value: secret-serveur-pour-les-liens (généré aléatoirement)

@@ -15,6 +15,7 @@ const express = require('express');
 const path = require('path');
 const supabase = require('./db');
 const { encrypt, decrypt, hashSecret } = require('./crypto');
+const { createToken, decodeToken } = require('./link');
 
 const app = express();
 app.use(express.json({ limit: '1mb' }));
@@ -25,6 +26,25 @@ app.use(express.static(path.join(__dirname, '..', 'public')));
 // Route SPA : /action/:uuid sert toujours l'app (le front lit l'UUID dans l'URL)
 app.get('/action/:uuid', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
+});
+
+// Route SPA : /r/:token — lien opaque. Sert l'app, le front appelle /api/link/:token
+// pour obtenir (actionId, key) sans les exposer dans l'URL.
+app.get('/r/:token', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
+});
+
+/**
+ * GET /api/link/:token
+ * Décode un lien opaque → { actionId, key }.
+ * Les infos ne sont PAS dans l'URL ; le front les reçoit en JSON et les garde en mémoire.
+ */
+app.get('/api/link/:token', (req, res) => {
+  const decoded = decodeToken(req.params.token);
+  if (!decoded) {
+    return res.status(400).json({ error: 'Lien invalide ou expiré.' });
+  }
+  res.json(decoded);
 });
 
 // Helper : valider un UUID
@@ -57,7 +77,7 @@ app.post('/api/actions', async (req, res) => {
     res.status(201).json({
       id: data.id,
       name: data.name,
-      link: `/action/${data.id}`,
+      token: createToken(data.id, masterKey),
       message: 'Action créée. Partagez ce lien aux équipes.'
     });
   } catch (e) {

@@ -63,13 +63,17 @@ npm start   # ou : npm run dev
    - `SUPABASE_ANON_KEY`
 
 ## Utilisation
-1. **Créateur** : entre un nom d'action + une clé de chiffrement → obtient un lien `/action/<UUID>?key=... ` à partager
-2. **Équipes** : ouvrent le lien → saisissent directement les portes (pas de code requis)
-3. **Compilation** : n'importe qui ayant le lien/clé peut voir les résultats et exporter en CSV
+1. **Créateur** : entre un nom d'action + une clé de chiffrement → obtient un **lien opaque** `/r/<token>` à partager
+2. **Équipes** : ouvrent le lien → arrivent **directement sur la saisie + compilation** (aucun UUID visible dans l'URL)
+3. **Exit** : bouton dans la barre noire pour revenir à l'écran "Créer une action"
 
-> 🔑 **Modèle d'accès** : le lien (avec sa clé) **est l'accès**. Quiconque le détient peut saisir et consulter. À vous de le garder dans votre boucle d'action (groupe Telegram/WhatsApp). Un champ **équipe optionnel** (ex : A3) permet de tracer qui a saisi quoi.
+> 🔑 **Modèle d'accès** : le lien `/r/<token>` **est l'accès**. L'UUID et la clé sont chiffrés dans le token (secret serveur `APP_SECRET`) et ne sont **jamais exposés dans l'URL**. Quiconque détient le lien peut saisir et consulter. Un champ **équipe optionnel** (ex : A3) permet de tracer qui a saisi quoi.
 
-Chaque action a un **UUID unique** dans l'URL, ce qui rend le lien non devinable.
+## Sécurité du lien
+- Le lien opaque `/r/<token>` contient l'UUID + la clé **chiffrés** avec le secret serveur (`APP_SECRET`)
+- L'UUID et la clé ne sont **jamais visibles dans l'URL**
+- `APP_SECRET` doit être une longue chaîne aléatoire (voir `.env.example`)
+- Les données restent chiffrées AES-256 en BDD même si le serveur est compromis
 
 ---
 *Fait avec ✊ pour les camarades de terrain.*
