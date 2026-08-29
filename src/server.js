@@ -4,18 +4,18 @@
  * Routes :
  * - POST /api/actions            : créer une action (retourne le lien UUID à partager)
  * - POST /api/actions/:id/doors  : enregistrer une porte visitée (données chiffrées)
- * - GET  /api/actions/:id/export : compilation déchiffrée (réservée au créateur)
+ * - POST /api/actions/:id/export : compilation déchiffrée (réservée au créateur)
  * - GET  / (static)              : app web
  * 
- * L'ID d'action est un UUID (ex: 97c7335f-aab5-4bdb-9119-9113050cb0b2),
- * le lien partagé contient l'UUID + la clé maître de chiffrement.
+ * L'action est identifiée par un UUID interne (jamais exposé dans l'URL publique).
+ * Le lien partagé est un token opaque /r/<token> qui encapsule { actionId, clé }.
  */
 
 const express = require('express');
 const path = require('path');
 const crypto = require('crypto');
 const supabase = require('./db');
-const { encrypt, decrypt, hashSecret } = require('./crypto');
+const { encrypt, decrypt, hashSecret, safeEqual } = require('./crypto');
 const { createToken, decodeToken } = require('./link');
 
 const app = express();
@@ -140,10 +140,12 @@ app.post('/api/actions/:id/doors', async (req, res) => {
     const sInteraction = sanitizeCode(interaction, 50);
     const sTeam = sanitizeCode(teamCode, 50);
 
-    // Vérifier que l'action existe
+    // Vérifier que l'action existe ET que la clé fournie est bien la clé maître
+    // (fix anti-écriture non authentifiée : empêche d'injecter des lignes
+    //  illisibles avec une clé arbitraire si on connaît l'UUID)
     const { data: action, error: errAction } = await supabase
       .from('actions')
-      .select('id')
+      .select('id, master_key_hash')
       .eq('id', actionId)
       .maybeSingle();
 
@@ -153,6 +155,10 @@ app.post('/api/actions/:id/doors', async (req, res) => {
     }
     if (!cipherKey || cipherKey.length < 4) {
       return res.status(400).json({ error: 'La clé de chiffrement est requise.' });
+    }
+    // La clé doit correspondre à celle qui a créé l'action (comparaison à temps constant)
+    if (!safeEqual(hashSecret(cipherKey), action.master_key_hash)) {
+      return res.status(403).json({ error: 'Clé de chiffrement invalide.' });
     }
     if (!sFloor && !sDoor) {
       return res.status(400).json({ error: 'Précisez au moins l\'étage ou le numéro de porte.' });
@@ -178,17 +184,22 @@ app.post('/api/actions/:id/doors', async (req, res) => {
 });
 
 /**
- * GET /api/actions/:id/export
- * Compilation déchiffrée des données (réservée au créateur avec la clé maître).
- * Query : ?masterKey=...
+ * POST /api/actions/:id/export
+ * Compilation déchiffrée des données (réservée à qui détient la clé maître).
+ * 
+ * 🔒 Fix anti-fuite : la clé est envoyée dans le CORPS de la requête (POST),
+ * PLUS JAMAIS dans l'URL (?masterKey=...). Elle ne se retrouve donc ni dans
+ * les logs d'accès Render, ni dans l'historique du navigateur, ni dans un
+ * proxy intermédiaire.
+ * Body : { masterKey: string }
  */
-app.get('/api/actions/:id/export', async (req, res) => {
+app.post('/api/actions/:id/export', async (req, res) => {
   try {
     const actionId = req.params.id;
     if (!isValidUUID(actionId)) {
       return res.status(400).json({ error: 'Identifiant d\'action invalide.' });
     }
-    const { masterKey } = req.query;
+    const { masterKey } = req.body || {};
 
     if (!masterKey) {
       return res.status(400).json({ error: 'La clé maître est requise pour consulter les données.' });
@@ -205,8 +216,8 @@ app.get('/api/actions/:id/export', async (req, res) => {
       return res.status(404).json({ error: 'Action introuvable.' });
     }
 
-    // Vérifier la clé maître
-    if (hashSecret(masterKey) !== action.master_key_hash) {
+    // Vérifier la clé maître (comparaison à temps constant)
+    if (!safeEqual(hashSecret(masterKey), action.master_key_hash)) {
       return res.status(403).json({ error: 'Clé maître incorrecte.' });
     }
 

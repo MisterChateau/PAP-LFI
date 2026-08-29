@@ -418,11 +418,20 @@
       } catch (e) { alert('Lien invalide ou expiré : ' + e.message); show('view-home'); }
     }
 
+    async function fetchExport() {
+      // 🔒 La clé est envoyée dans le corps (POST), jamais dans l'URL
+      const r = await fetch(`/api/actions/${state.actionId}/export`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ masterKey: state.cipherKey })
+      });
+      return r;
+    }
+
     async function loadAction() {
       document.getElementById('action-bar').classList.remove('hidden');
       show('view-action'); showTab('saisie');
       try {
-        const r = await fetch(`/api/actions/${state.actionId}/export?masterKey=${encodeURIComponent(state.cipherKey)}`);
+        const r = await fetchExport();
         if (r.ok) { const d = await r.json(); state.actionName = d.action.name; document.getElementById('actionBarName').innerHTML = '<span class="dot">●</span> ' + esc(d.action.name); }
       } catch(e) {}
       state.selectedInteraction = null;
@@ -442,7 +451,7 @@
     async function updateCounter() {
       if (!state.actionId || !state.cipherKey) return;
       try {
-        const r = await fetch(`/api/actions/${state.actionId}/export?masterKey=${encodeURIComponent(state.cipherKey)}`);
+        const r = await fetchExport();
         if (r.ok) {
           const d = await r.json();
           document.getElementById('counter').innerHTML =
@@ -480,7 +489,7 @@
       const statsEl = document.getElementById('compilStats'); const tbody = document.querySelector('#compilTable tbody');
       statsEl.innerHTML = '<p class="muted">Chargement...</p>'; tbody.innerHTML = '';
       try {
-        const r = await fetch(`/api/actions/${state.actionId}/export?masterKey=${encodeURIComponent(state.cipherKey)}`);
+        const r = await fetchExport();
         const d = await r.json();
         if (!r.ok) throw new Error(d.error || 'Erreur');
         statsEl.innerHTML = `
