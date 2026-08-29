@@ -14,12 +14,39 @@
 const express = require('express');
 const path = require('path');
 const crypto = require('crypto');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 const supabase = require('./db');
 const { encrypt, decrypt, hashSecret, safeEqual } = require('./crypto');
 const { createToken, decodeToken } = require('./link');
 
 const app = express();
 app.use(express.json({ limit: '1mb' }));
+
+// 🔒 Sécurité des en-têtes HTTP (helmet) : CSP, Referrer-Policy, X-Content-Type-Options,
+// suppression de X-Powered-By, etc. Empêche les fuites via Referrer et atténue les XSS.
+app.use(helmet());
+
+// 🔒 Rate limiting global : protège contre la saturation (création massive d'actions,
+// spam de portes). 100 requêtes / 15 min par IP, avec une limite plus stricte
+// sur les routes d'écriture.
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 300,                  // 300 requêtes globales / 15 min
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Trop de requêtes. Réessayez dans quelques minutes.' }
+});
+app.use('/api/', limiter);
+
+// Limite d'écriture plus stricte (création d'action = très sensible, spam possible)
+const writeLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100, // 100 écritures / 15 min par IP
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Trop d\'écritures. Réessayez dans quelques minutes.' }
+});
 
 // --- Sanitisation des entrées ---
 // Nettoie une chaîne : retire caractères de contrôle, balises HTML, tronque.
@@ -87,7 +114,7 @@ function isValidUUID(v) { return typeof v === 'string' && UUID_RE.test(v); }
  * lien opaque /r/<token> ; aucune clé à retenir côté utilisateur.
  * Retourne l'UUID de l'action + le lien opaque à partager.
  */
-app.post('/api/actions', async (req, res) => {
+app.post('/api/actions', writeLimiter, async (req, res) => {
   try {
     const { name } = req.body || {};
     const cleanName = sanitizeInput(name, 150);
@@ -98,9 +125,11 @@ app.post('/api/actions', async (req, res) => {
     // Générer une clé de chiffrement aléatoire forte (32 octets → hex)
     const masterKey = crypto.randomBytes(32).toString('hex');
 
+    // 🔒 Le nom d'action est CHIFFRÉ avec la clé maître : une fuite Supabase
+    // ne révèle plus où/quand le parti fait du terrain.
     const { data, error } = await supabase
       .from('actions')
-      .insert({ name: cleanName, master_key_hash: hashSecret(masterKey) })
+      .insert({ name: encrypt(cleanName, masterKey), master_key_hash: hashSecret(masterKey) })
       .select()
       .single();
 
@@ -108,7 +137,7 @@ app.post('/api/actions', async (req, res) => {
 
     res.status(201).json({
       id: data.id,
-      name: data.name,
+      name: cleanName, // renvoyé en clair au créateur (il a la clé dans le token)
       token: createToken(data.id, masterKey),
       message: 'Action créée. Partagez ce lien aux équipes.'
     });
@@ -124,7 +153,7 @@ app.post('/api/actions', async (req, res) => {
  * Body : { teamCode, cipherKey, building, floor, doorNumber, interaction, details }
  * Toutes les données sont chiffrées avec cipherKey (la clé maître) avant stockage.
  */
-app.post('/api/actions/:id/doors', async (req, res) => {
+app.post('/api/actions/:id/doors', writeLimiter, async (req, res) => {
   try {
     const actionId = req.params.id;
     if (!isValidUUID(actionId)) {
@@ -196,7 +225,7 @@ app.post('/api/actions/:id/doors', async (req, res) => {
  * proxy intermédiaire.
  * Body : { masterKey: string }
  */
-app.post('/api/actions/:id/export', async (req, res) => {
+app.post('/api/actions/:id/export', writeLimiter, async (req, res) => {
   try {
     const actionId = req.params.id;
     if (!isValidUUID(actionId)) {
@@ -246,7 +275,7 @@ app.post('/api/actions/:id/export', async (req, res) => {
     }));
 
     res.json({
-      action: { id: action.id, name: action.name, createdAt: action.created_at },
+      action: { id: action.id, name: action.name ? decrypt(action.name, masterKey) : null, createdAt: action.created_at },
       total: decrypted.length,
       doors: decrypted
     });

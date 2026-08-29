@@ -13,7 +13,11 @@ services:
       # ⚠️ À renseigner dans le Dashboard Render (Service → Environment)
       # - key: SUPABASE_URL
       #   value: https://VOTRE-PROJET.supabase.co
-      # - key: SUPABASE_ANON_KEY
-      #   value: votre-clé-anon
+      # - key: SUPABASE_SERVICE_ROLE_KEY
+      #   value: votre-clé-service-role (Page Settings → API → service_role)
       # - key: APP_SECRET
       #   value: secret-serveur-pour-les-liens (généré aléatoirement)
+      #
+      # 🔒 La clé anon (SUPABASE_ANON_KEY) n'est plus utilisée côté serveur :
+      #   on passe en service_role pour contourner la RLS et retirer les
+      #   policies d'accès public. Ne configurez plus SUPABASE_ANON_KEY.

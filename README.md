@@ -43,7 +43,7 @@ npm install
 
 # Créer un fichier .env avec :
 # SUPABASE_URL=https://VOTRE-PROJET.supabase.co
-# SUPABASE_ANON_KEY=votre-clé-anon
+# SUPABASE_SERVICE_ROLE_KEY=votre-clé-service-role
 
 npm start   # ou : npm run dev
 # → http://localhost:3000
@@ -52,15 +52,20 @@ npm start   # ou : npm run dev
 ## Configuration Supabase
 1. Créez un projet sur [supabase.com](https://supabase.com) (gratuit)
 2. Dans le **SQL Editor**, exécutez le contenu de `supabase_schema.sql`
-3. Récupérez dans **Settings → API** : l'URL et la clé `anon public`
-4. Configurez ces valeurs en variables d'environnement (`SUPABASE_URL`, `SUPABASE_ANON_KEY`)
+3. Récupérez dans **Settings → API** : l'URL et la clé `service_role`
+4. Configurez ces valeurs en variables d'environnement (`SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`)
+
+> 🔒 **Sécurité** : le serveur utilise la clé `service_role` (contourne la RLS).
+> La clé `anon` publique n'est plus utilisée : les policies d'accès public ont été retirées.
+> Si la clé `anon` fuit, elle ne donne accès à rien.
 
 ## Déploiement Render
 1. Connectez votre repo GitHub `MisterChateau/PAP-LFI` sur Render
 2. Render détecte `render.yaml` (Blueprint) → déploie `pap-lfi`
 3. Dans le Dashboard Render → Service → Environment, ajoutez :
    - `SUPABASE_URL`
-   - `SUPABASE_ANON_KEY`
+   - `SUPABASE_SERVICE_ROLE_KEY`
+   - `APP_SECRET`
 
 ## Utilisation
 1. **Créateur** : entre un **nom d'action** → obtient un **lien opaque** `/r/<token>` à partager

@@ -31,9 +31,11 @@ create table if not exists public.doors (
 -- Index pour accélérer les requêtes par action
 create index if not exists idx_doors_action on public.doors(action_id);
 
--- Sécurité : accès anonyme en lecture/écriture (les données sont chiffrées)
+-- Sécurité : RLS activée mais AUCUNE policy d'accès public.
+-- Le serveur utilise la clé service_role (contourne la RLS).
+-- La clé anon (publique) ne peut plus lire/écrire/supprimer quoi que ce soit :
+-- si elle fuit, elle ne donne accès à rien.
 alter table public.actions enable row level security;
 alter table public.doors enable row level security;
 
-create policy "allow anon actions" on public.actions for all using (true) with check (true);
-create policy "allow anon doors" on public.doors for all using (true) with check (true);
+-- (Aucune policy "allow anon" : accès réservé au service_role via le serveur)

@@ -414,7 +414,12 @@
         const r = await fetch(`/api/link/${encodeURIComponent(token)}`);
         const d = await r.json();
         if (!r.ok) throw new Error(d.error || 'Lien invalide');
-        state.actionId = d.actionId; state.cipherKey = d.key; loadAction();
+        state.actionId = d.actionId; state.cipherKey = d.key;
+        // 🔒 Retire le token de l'URL (history.replaceState) : sur un téléphone
+        // de terrain partagé, le lien n'est plus visible dans la barre d'adresse
+        // ni dans l'historique du navigateur.
+        history.replaceState({}, '', '/');
+        loadAction();
       } catch (e) { alert('Lien invalide ou expiré : ' + e.message); show('view-home'); }
     }
 
