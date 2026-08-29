@@ -166,7 +166,10 @@ app.post('/api/actions/:id/doors', async (req, res) => {
 
     const { error } = await supabase.from('doors').insert({
       action_id: actionId,
-      team_hash: sTeam ? hashSecret(sTeam) : null,
+      // Le code d'équipe est CHIFFRÉ (comme les autres champs), pas haché :
+      // le créateur (qui a la clé) peut le relire dans la compilation,
+      // et en BDD il reste illisible (AES-256-GCM).
+      team: sTeam ? encrypt(sTeam, cipherKey) : null,
       building: sBuilding ? encrypt(sBuilding, cipherKey) : null,
       floor: encrypt(sFloor, cipherKey),
       door_number: encrypt(sDoor, cipherKey),
@@ -233,7 +236,7 @@ app.post('/api/actions/:id/export', async (req, res) => {
     // Déchiffrer avec la clé maître
     const decrypted = (doors || []).map((d) => ({
       id: d.id,
-      team: d.team_hash ? d.team_hash.slice(0, 8) : null,
+      team: d.team ? decrypt(d.team, masterKey) : null,
       building: d.building ? decrypt(d.building, masterKey) : null,
       floor: d.floor ? decrypt(d.floor, masterKey) : null,
       doorNumber: d.door_number ? decrypt(d.door_number, masterKey) : null,

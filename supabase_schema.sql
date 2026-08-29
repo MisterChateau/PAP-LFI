@@ -19,7 +19,7 @@ create table if not exists public.actions (
 create table if not exists public.doors (
   id bigint generated always as identity primary key,
   action_id uuid not null references public.actions(id) on delete cascade,
-  team_hash text,
+  team text,
   building text,
   floor text,
   door_number text,
