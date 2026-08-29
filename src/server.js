@@ -23,9 +23,28 @@ const { createToken, decodeToken } = require('./link');
 const app = express();
 app.use(express.json({ limit: '1mb' }));
 
-// 🔒 Sécurité des en-têtes HTTP (helmet) : CSP, Referrer-Policy, X-Content-Type-Options,
-// suppression de X-Powered-By, etc. Empêche les fuites via Referrer et atténue les XSS.
-app.use(helmet());
+// 🔒 Sécurité des en-têtes HTTP (helmet) : Referrer-Policy, X-Content-Type-Options,
+// suppression de X-Powered-By, etc. Empêche les fuites via Referrer.
+//
+// ⚠️ La CSP est configurée pour autoriser les scripts/styles inline ('unsafe-inline')
+// car le front est un fichier statique unique (public/index.html) qui embarque tout
+// son JS/CSS inline. Les valeurs affichées sont échappées (esc()) donc le risque
+// XSS est maîtrisé. On garde la Referrer-Policy stricte (no-referrer) pour que
+// l'UUID/la clé ne fuient jamais via le Referrer vers des ressources externes.
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", "data:"],
+      connectSrc: ["'self'"],
+      objectSrc: ["'none'"],
+      frameAncestors: ["'none'"]
+    }
+  },
+  referrerPolicy: { policy: 'no-referrer' }
+}));
 
 // 🔒 Rate limiting global : protège contre la saturation (création massive d'actions,
 // spam de portes). 100 requêtes / 15 min par IP, avec une limite plus stricte
