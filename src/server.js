@@ -285,8 +285,89 @@ app.post('/api/actions/:id/export', writeLimiter, async (req, res) => {
   }
 });
 
+// --- Purge des données (conformité RGPD) ---
+
+// Durée de conservation : 30 jours (les données d'opinion politique + adresse
+// ne doivent pas être gardées indéfiniment). Au-delà, tout est supprimé.
+const RETENTION_DAYS = 30;
+const RETENTION_MS = RETENTION_DAYS * 24 * 60 * 60 * 1000;
+
+/**
+ * Supprime toutes les portes d'une action.
+ * @param {string} actionId
+ */
+async function purgeDoors(actionId) {
+  const { error } = await supabase.from('doors').delete().eq('action_id', actionId);
+  if (error) throw error;
+}
+
+/**
+ * Purge automatique : supprime les ACTIONS (et leurs portes en cascade) dont
+ * la dernière activité est antérieure à la durée de rétention.
+ * Basé sur la date de création de l'action (on pourrait affiner avec la
+ * dernière porte, mais created_at est un bon proxy simple).
+ * @returns {number} nombre d'actions purgées
+ */
+async function purgeExpiredActions() {
+  const cutoff = new Date(Date.now() - RETENTION_MS).toISOString();
+  const { data, error } = await supabase
+    .from('actions')
+    .select('id')
+    .lt('created_at', cutoff);
+  if (error) throw error;
+  if (!data || data.length === 0) return 0;
+  // Supabase delete avec filtre (cascade sur les portes via FK on delete cascade)
+  const ids = data.map(a => a.id);
+  const { error: delErr } = await supabase.from('actions').delete().in('id', ids);
+  if (delErr) throw delErr;
+  return data.length;
+}
+
+/**
+ * POST /api/actions/:id/purge
+ * Supprime TOUTES les données (portes) d'une action. Réservé à qui détient
+ * la clé maître (le créateur). Conforme RGPD (droit à l'effacement).
+ * Body : { masterKey: string }
+ */
+app.post('/api/actions/:id/purge', writeLimiter, async (req, res) => {
+  try {
+    const actionId = req.params.id;
+    if (!isValidUUID(actionId)) {
+      return res.status(400).json({ error: 'Identifiant d\'action invalide.' });
+    }
+    const { masterKey } = req.body || {};
+    if (!masterKey) {
+      return res.status(400).json({ error: 'La clé maître est requise.' });
+    }
+    const { data: action, error: errAction } = await supabase
+      .from('actions')
+      .select('master_key_hash')
+      .eq('id', actionId)
+      .maybeSingle();
+    if (errAction) throw errAction;
+    if (!action) return res.status(404).json({ error: 'Action introuvable.' });
+    if (!safeEqual(hashSecret(masterKey), action.master_key_hash)) {
+      return res.status(403).json({ error: 'Clé maître incorrecte.' });
+    }
+    await purgeDoors(actionId);
+    res.json({ message: 'Données supprimées.', deleted: true });
+  } catch (e) {
+    console.error('Erreur purge:', e.message);
+    res.status(500).json({ error: 'Erreur serveur lors de la purge.' });
+  }
+});
+
 // --- Démarrage ---
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`✅ PAP-LFI démarré sur http://localhost:${PORT}`);
+  // Purge au démarrage + quotidienne (conformité RGPD, pas besoin de cron externe)
+  purgeExpiredActions()
+    .then(n => n > 0 && console.log(`🧹 Purge RGPD : ${n} action(s) expirée(s) supprimée(s).`))
+    .catch(e => console.error('Erreur purge démarrage:', e.message));
+  setInterval(() => {
+    purgeExpiredActions()
+      .then(n => n > 0 && console.log(`🧹 Purge RGPD : ${n} action(s) expirée(s) supprimée(s).`))
+      .catch(e => console.error('Erreur purge périodique:', e.message));
+  }, 24 * 60 * 60 * 1000); // tous les jours
 });

@@ -130,6 +130,8 @@
     .btn.violet:hover { background: var(--lfi-violet-deep); }
     .btn.green { background: var(--lfi-green); box-shadow: 0 3px 10px rgba(46,139,87,.25); }
     .btn.green:hover { background: #23704a; }
+    .btn.danger { background: #c0392b; box-shadow: 0 3px 10px rgba(192,57,43,.3); }
+    .btn.danger:hover { background: #a93226; }
     .btn:disabled { opacity: .5; cursor: not-allowed; }
     .btn.small { padding: 12px; font-size: .8rem; border-radius: 10px; }
 
@@ -321,8 +323,9 @@
       <div id="sub-compil" class="hidden">
         <div class="card">
           <div id="compilStats"></div>
-          <div style="display:flex;gap:8px;margin-bottom:14px">
+          <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
             <button class="btn secondary small" onclick="exportCsv()">⬇️ Exporter CSV</button>
+            <button class="btn danger small" onclick="purgeData()">🗑️ Supprimer les données</button>
           </div>
           <div class="table-wrap">
             <table id="compilTable">
@@ -527,6 +530,27 @@
       rows.forEach(tr => { const cols = [...tr.querySelectorAll('td')].map(td => '"'+(td.textContent||'').replace(/"/g,'""')+'"'); csv += cols.join(';')+'\n'; });
       const blob = new Blob(['\uFEFF'+csv], { type: 'text/csv;charset=utf-8;' });
       const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download='pap-lfi-compilation.csv'; a.click();
+    }
+
+    // 🗑️ Suppression des données (RGPD : droit à l'effacement)
+    // Double confirmation : avertit que c'est irréversible.
+    async function purgeData() {
+      if (!state.actionId || !state.cipherKey) return;
+      const premier = confirm('⚠️ Supprimer TOUTES les portes enregistrées pour cette action ?\n\nCette action est irréversible : les adresses et interactions saisies seront définitivement effacées.');
+      if (!premier) return;
+      const second = confirm('❌ Êtes-vous VRAIMENT sûr ?\n\nIl n\'existe aucun moyen de récupérer ces données une fois supprimées. Les équipes devront ressaisir depuis zéro.');
+      if (!second) return;
+      try {
+        const r = await fetch(`/api/actions/${state.actionId}/purge`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ masterKey: state.cipherKey })
+        });
+        const d = await r.json();
+        if (!r.ok) throw new Error(d.error || 'Erreur');
+        await loadCompil();
+        await updateCounter();
+        showStatus('success', '✅ Toutes les données ont été supprimées.');
+      } catch (e) { showStatus('error', 'Erreur : ' + e.message); }
     }
 
     function showStatus(type, msg) { const el=document.getElementById('status'); el.className='status '+type; el.textContent=msg; }
