@@ -183,10 +183,11 @@
     /* ===== ONGLETS ===== */
     .tabs { display: flex; gap: 8px; margin-bottom: 18px; }
     .tab {
-      flex: 1; padding: 15px; border: 2px solid var(--lfi-border); border-radius: 13px;
-      text-align: center; font-weight: 800; font-size: .88rem; cursor: pointer;
+      flex: 1; min-height: 67px; padding: 10px 8px; border: 2px solid var(--lfi-border); border-radius: 13px;
+      display: flex; align-items: center; justify-content: center;
+      text-align: center; font-weight: 800; font-size: .88rem; line-height: 1.25; cursor: pointer;
       background: #fff; color: var(--lfi-black); text-transform: uppercase; letter-spacing: .5px;
-      transition: all .15s;
+      transition: all .15s; box-sizing: border-box;
     }
     .tab.active { border-color: var(--lfi-red); background: var(--lfi-red); color: #fff; box-shadow: 0 3px 10px rgba(225,0,15,.2); }
 
