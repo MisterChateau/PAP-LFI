@@ -183,12 +183,13 @@
     /* ===== ONGLETS ===== */
     .tabs { display: flex; gap: 8px; margin-bottom: 18px; }
     .tab {
-      flex: 1; min-height: 67px; padding: 10px 8px; border: 2px solid var(--lfi-border); border-radius: 13px;
-      display: flex; align-items: center; justify-content: center;
-      text-align: center; font-weight: 800; font-size: .88rem; line-height: 1.25; cursor: pointer;
-      background: #fff; color: var(--lfi-black); text-transform: uppercase; letter-spacing: .5px;
+      flex: 1; min-height: 76px; padding: 9px 6px; border: 2px solid var(--lfi-border); border-radius: 13px;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+      text-align: center; font-weight: 800; font-size: .76rem; line-height: 1.15; cursor: pointer;
+      background: #fff; color: var(--lfi-black); text-transform: uppercase; letter-spacing: .3px;
       transition: all .15s; box-sizing: border-box;
     }
+    .tab .ico { font-size: 1.45rem; line-height: 1; display: block; }
     .tab.active { border-color: var(--lfi-red); background: var(--lfi-red); color: #fff; box-shadow: 0 3px 10px rgba(225,0,15,.2); }
 
     /* ===== LIEN ===== */
@@ -332,9 +333,9 @@
     <!-- VUE : ACTION OUVERTE -->
     <div id="view-action" class="hidden">
       <div class="tabs">
-        <div class="tab active" id="tab-saisie" onclick="showTab('saisie')">🚪 Saisir</div>
-        <div class="tab" id="tab-compil" onclick="showTab('compil')">📊 Résultats</div>
-        <div class="tab" id="tab-conseils" onclick="showTab('conseils')">📖 Conseils</div>
+        <div class="tab active" id="tab-saisie" onclick="showTab('saisie')"><span class="ico">🚪</span><span>Saisir</span></div>
+        <div class="tab" id="tab-compil" onclick="showTab('compil')"><span class="ico">📊</span><span>Résultats</span></div>
+        <div class="tab" id="tab-conseils" onclick="showTab('conseils')"><span class="ico">📖</span><span>Conseils</span></div>
       </div>
 
       <!-- SAISIE -->
