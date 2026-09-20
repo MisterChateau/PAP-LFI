@@ -221,6 +221,35 @@
     th { background: var(--lfi-black); color: #fff; position: sticky; top: 0; font-size: .68rem; text-transform: uppercase; letter-spacing: .5px; }
     tr:nth-child(even) { background: #faf9f6; }
 
+    /* ===== CONSEILS (fiches pratiques LFI) ===== */
+    .guide-intro {
+      background: var(--lfi-violet-soft); border:1px solid #d3c9e8; border-left:5px solid var(--lfi-violet);
+      border-radius: 12px; padding: 14px 16px; font-size:.86rem; line-height:1.5; margin-bottom:16px; color:#3a2360;
+    }
+    .accordion { border:1px solid var(--lfi-border); border-radius:14px; overflow:hidden; margin-bottom:10px; background:#fff; }
+    .accordion > summary {
+      list-style:none; cursor:pointer; padding:15px 16px; font-weight:800; font-size:.92rem;
+      display:flex; align-items:center; gap:10px; background:#fff; color:var(--lfi-black);
+    }
+    .accordion > summary::-webkit-details-marker { display:none; }
+    .accordion > summary::after { content:'▾'; margin-left:auto; font-size:1.1rem; color:var(--lfi-red); transition:transform .2s; }
+    .accordion[open] > summary::after { transform:rotate(180deg); }
+    .accordion[open] > summary { background: var(--lfi-cream); border-bottom:1px solid var(--lfi-border); }
+    .accordion .acc-body { padding: 14px 16px 18px; font-size:.86rem; line-height:1.55; color:#2b2b33; }
+    .accordion .acc-body ul { margin:8px 0 8px 18px; }
+    .accordion .acc-body li { margin-bottom:7px; }
+    .accordion .acc-body p { margin: 8px 0; }
+    .quote {
+      background:#fff; border-left:4px solid var(--lfi-red); border-radius:8px;
+      padding:10px 13px; margin:10px 0; font-style:italic; color:#3a2360; font-size:.85rem;
+      box-shadow: 0 1px 4px rgba(0,0,0,.04);
+    }
+    .warn { background:#fff6e5; border-left:4px solid var(--lfi-or, #F2C230); border-radius:8px; padding:10px 13px; margin:10px 0; font-size:.83rem; }
+    .objection { border-top:1px dashed var(--lfi-border); padding-top:12px; margin-top:12px; }
+    .objection:first-of-type { border-top:none; margin-top:0; padding-top:0; }
+    .objection .obj-q { font-weight:800; color:var(--lfi-violet-deep); display:block; margin-bottom:4px; }
+    .obj-a { color:#33333a; }
+
     .footer-note { text-align: center; font-size: .74rem; color: #a09b92; padding: 18px 10px; }
     .footer-note .lock { color: var(--lfi-red); font-weight: 700; }
     .muted { color: #8a857c; font-size: .85rem; line-height:1.45; }
@@ -266,6 +295,23 @@
             🔒 Toutes les données sont <span class="lock">chiffrées</span>. Saisie et résultats ne s'affichent que via le lien.
           </p>
         </div>
+
+        <div class="how-block" style="margin-top:14px">
+          <h3>📖 Conseils porte-à-porte</h3>
+          <p>
+            L'écoute avant l'argument. Accroche, règles d'or, objections, suivi : retrouvez les recommandations officielles LFI dans l'onglet <b>📖 Conseils</b> de votre action.
+          </p>
+          <button class="btn secondary small" style="margin-top:12px" onclick="toggleHomeGuide()">📖 Afficher les bases du militant</button>
+          <div id="homeGuide" class="hidden" style="margin-top:14px">
+            <div class="guide-intro" style="margin-bottom:12px">
+              🌸✊ <b>Avant de sonner :</b> jamais seul·e (binôme), entre 11h et 20h30, un tract en main, et le plus important — <b>écouter d'abord</b>.
+            </div>
+            <p style="font-size:.85rem"><b>Votre objectif n'est pas de convaincre sur LFI</b>, c'est de partir des problèmes des gens. Question ouverte : <i>« Qu'est-ce que vous voudriez voir changer dans le pays ? »</i></p>
+            <p style="font-size:.85rem;margin-top:8px"><b>Règle d'or :</b> on écoute les problèmes, on ne débat pas des avis. Face à un hostile : <i>« Ce n'est pas en une discussion que ça changera »</i> → inviter au site et passer.</p>
+            <p style="font-size:.85rem;margin-top:8px"><b>À la fin :</b> prendre le contact, noter le souci remonté (logement, propreté, transports…), proposer l'inscription sur les listes électorales.</p>
+            <p class="muted" style="margin-top:10px">Le détail complet (objections, suivi, permanence) est dans l'onglet 📖 Conseils.</p>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -287,6 +333,7 @@
       <div class="tabs">
         <div class="tab active" id="tab-saisie" onclick="showTab('saisie')">🚪 Saisir</div>
         <div class="tab" id="tab-compil" onclick="showTab('compil')">📊 Résultats</div>
+        <div class="tab" id="tab-conseils" onclick="showTab('conseils')">📖 Conseils</div>
       </div>
 
       <!-- SAISIE -->
@@ -337,6 +384,129 @@
           </div>
         </div>
       </div>
+      <!-- CONSEILS TERRAIN (recommandations officielles LFI) -->
+      <div id="sub-conseils" class="hidden">
+        <div class="card">
+          <span class="section-tag">Recommandations LFI</span>
+          <h2>📖 Conseils terrain</h2>
+          <div class="guide-intro">
+            🌸✊ <b>L'écoute avant l'argument.</b> Le porte-à-porte est notre meilleure arme pour convaincre, mais on convainc par l'argumentation, jamais par la culpabilisation.
+          </div>
+
+          <details class="accordion" open>
+            <summary>🎯 Avant d'y aller</summary>
+            <div class="acc-body">
+              <ul>
+                <li><b>Jamais seul·e</b> — constituez des <b>binômes</b> (paritaires si possible).</li>
+                <li><b>Horaires : 11h → 20h30 maximum.</b></li>
+                <li><b>Ciblez</b> un quartier populaire où l'<b>abstention est forte</b>.</li>
+                <li><b>Matériel</b> : 1 paquet de tracts, téléphone avec Action Populaire, <b>autocollant LFI visible</b>.</li>
+                <li><b>Un objectif clair par session</b> : appel au vote, invitation à une réunion, inscription sur les listes, présentation du programme.</li>
+              </ul>
+            </div>
+          </details>
+
+          <details class="accordion">
+            <summary>👋 La phrase d'accroche</summary>
+            <div class="acc-body">
+              <p>Se présenter <b>court</b>, puis <b>une question ouverte</b> :</p>
+              <div class="quote">« Bonjour, nous sommes {prénoms}, nous sommes militants pour la campagne de… et nous aimerions vous donner une information concernant… »</div>
+              <p>Puis :</p>
+              <ul>
+                <li>« Qu'est-ce que vous voudriez voir changer dans le pays ? »</li>
+                <li>« Êtes-vous au courant des prochaines élections ? »</li>
+                <li>« Vous êtes du quartier depuis longtemps ? »</li>
+              </ul>
+              <p><b>Posture :</b> tenez-vous bien en face de la porte quand vous sonnez.</p>
+            </div>
+          </details>
+
+          <details class="accordion">
+            <summary>🗣️ Les 6 règles d'or</summary>
+            <div class="acc-body">
+              <ul>
+                <li><b>Écouter d'abord</b> — c'est primordial. On est là pour convaincre, mais l'écoute passe avant.</li>
+                <li><b>Ne pas monopoliser la parole.</b></li>
+                <li><b>Réponses ciblées</b>, thème par thème.</li>
+                <li><b>Positif, sourire, empathie</b> — parfois les gens ont juste besoin de raconter.</li>
+                <li><b>Pas de conversations trop longues</b>, surtout face à un interlocuteur défavorable.</li>
+                <li><b>Jamais culpabiliser ni moraliser.</b></li>
+              </ul>
+              <div class="warn">⚠️ Écouter les <b>problèmes</b>, oui. Débattre des <b>avis sur LFI</b>, non : ça part en débat stérile.</div>
+            </div>
+          </details>
+
+          <details class="accordion">
+            <summary>🛡️ Objections & sorties de secours</summary>
+            <div class="acc-body">
+              <div class="objection">
+                <span class="obj-q">« Et vous pensez quoi de LFI ? »</span>
+                <span class="obj-a">Ne pas répondre : <i>« Je ne vais pas vous demander votre avis sur LFI. Ce qui compte, c'est vos problèmes à vous. »</i> → revenir au concret.</span>
+              </div>
+              <div class="objection">
+                <span class="obj-q">« Tous pourris / ça sert à rien »</span>
+                <span class="obj-a">Valider, ne pas entrer dans le débat : <i>« Les débats télé, moi je les regarde pas non plus. Ce qui me concerne, c'est que le loyer a pris 40 % en dix ans. »</i></span>
+              </div>
+              <div class="objection">
+                <span class="obj-q">« LFI c'est extrême / trop radical »</span>
+                <span class="obj-a">Ne pas se justifier, renvoyer aux actes : <i>« Regardez ce qu'on a voté : SMIC, retraites, santé. Tout est écrit. »</i></span>
+              </div>
+              <div class="objection">
+                <span class="obj-q">« Je vote pas, ça change rien »</span>
+                <span class="obj-a">Partir des intérêts, pas de la morale : <i>« Vous votez pour vos intérêts de classe. Pas pour un nom, pas contre un visage. »</i></span>
+              </div>
+              <div class="objection">
+                <span class="obj-q">Personne d'hostile qui s'accroche</span>
+                <span class="obj-a">Ne pas s'acharner : <i>« Ce n'est pas en une discussion que ça changera. »</i> → inviter au site, passer à quelqu'un d'autre.</span>
+              </div>
+            </div>
+          </details>
+
+          <details class="accordion">
+            <summary>🤝 Fin de discussion & appel à l'action</summary>
+            <div class="acc-body">
+              <p>Selon l'intérêt, inviter à :</p>
+              <ul>
+                <li>Venir au prochain rendez-vous de quartier</li>
+                <li>Aller sur le site du programme</li>
+                <li><b>Signer</b> sur le site</li>
+                <li><b>En parler autour de soi</b></li>
+                <li>Laisser ses coordonnées (tél + mail)</li>
+                <li>Devenir <b>correspondant·e d'immeuble</b></li>
+              </ul>
+              <p><b>Personne n'ouvre ?</b> Tract glissé sous la porte ou coincé dans le battant.</p>
+            </div>
+          </details>
+
+          <details class="accordion">
+            <summary>🏛️ Permanence & remontée de soucis</summary>
+            <div class="acc-body">
+              <p>Le point fixe en bas d'immeuble complète le PAP : il recueille ce que la porte entrouverte ne permet pas.</p>
+              <ul>
+                <li><b>Encourager à remonter les problèmes</b> (logement, propreté, ascenseur, charges, transports, sécurité).</li>
+                <li><b>Noter le souci par adresse/immeuble</b> → ça fait un dossier, pas une doléance isolée. Le député peut s'en saisir (courrier, interpellation).</li>
+                <li><b>Inscription sur les listes électorales</b> : le livrable immédiat. Cerfa papier ou service-public.gouv.fr, on peut aider sur place.</li>
+                <li>Mettre ces infos dans le champ <b>« Détails »</b> à la saisie — c'est tracé et compilé par rue.</li>
+              </ul>
+              <div class="warn">⚠️ RGPD : ne pas noter de données personnelles sensibles (opinion politique, santé, religion) dans les « Détails ». Le souci matériel, oui ; le jugement sur la personne, non.</div>
+            </div>
+          </details>
+
+          <details class="accordion">
+            <summary>📌 Après la session</summary>
+            <div class="acc-body">
+              <ul>
+                <li><b>Prendre les contacts</b> et tenir un fichier de numéros.</li>
+                <li><b>Rappeler</b> ceux dont on n'a plus de nouvelles → inviter à la prochaine réunion.</li>
+                <li><b>Bilan collectif</b> : partager les expériences, dédramatiser pour ceux qui ont moins accroché.</li>
+                <li><b>Carte de suivi</b> (OpenStreetMap) : colorier les rues déjà faites → éviter les doublons.</li>
+              </ul>
+              <p class="muted" style="margin-top:10px">Repères terrain : 2h ≈ 30 portes toquées, ~1/3 ouvertes, ~5 vraies discussions.</p>
+            </div>
+          </details>
+        </div>
+      </div>
+
     </div>
 
   </div>
@@ -383,9 +553,16 @@
     function showTab(tab) {
       document.getElementById('tab-saisie').classList.toggle('active', tab === 'saisie');
       document.getElementById('tab-compil').classList.toggle('active', tab === 'compil');
+      document.getElementById('tab-conseils').classList.toggle('active', tab === 'conseils');
       document.getElementById('sub-saisie').classList.toggle('hidden', tab !== 'saisie');
       document.getElementById('sub-compil').classList.toggle('hidden', tab !== 'compil');
+      document.getElementById('sub-conseils').classList.toggle('hidden', tab !== 'conseils');
       if (tab === 'compil') loadCompil();
+    }
+
+    // 📖 Conseils visibles AVANT de rejoindre une action (page d'accueil)
+    function toggleHomeGuide() {
+      document.getElementById('homeGuide').classList.toggle('hidden');
     }
 
     async function createAction() {
