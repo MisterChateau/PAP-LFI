@@ -4,6 +4,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>✊ Porte-à-Porte — La France Insoumise</title>
+  <!-- 📱 PWA : installation sur l'écran d'accueil -->
+  <link rel="manifest" href="/manifest.webmanifest">
+  <meta name="theme-color" content="#4C0297">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="PAP LFI">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
   <style>
@@ -261,6 +270,24 @@
     .contact-box b { color: var(--lfi-violet-deep); font-size: .9rem; }
     a.btn.small.contact-btn { background: var(--lfi-violet); color: var(--lfi-white) !important; text-decoration: none; border-color: var(--lfi-violet); white-space: nowrap; }
     a.btn.small.contact-btn:hover { background: var(--lfi-violet-deep); }
+
+    /* 📱 Popup d'installation PWA */
+    .pwa-banner { position: fixed; left: 12px; right: 12px; bottom: 12px; z-index: 9999;
+      background: var(--lfi-white); border: 1px solid rgba(76,2,151,.28); border-radius: 16px;
+      box-shadow: 0 12px 34px rgba(16,16,20,.30); padding: 14px; max-width: 520px; margin: 0 auto;
+      animation: pwaUp .32s ease-out; }
+    @keyframes pwaUp { from { transform: translateY(18px); opacity: 0 } to { transform: translateY(0); opacity: 1 } }
+    .pwa-inner { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .pwa-icon { width: 46px; height: 46px; border-radius: 12px; flex-shrink: 0; }
+    .pwa-text { flex: 1; min-width: 150px; }
+    .pwa-text b { font-size: .92rem; color: var(--lfi-violet-deep); }
+    .pwa-text p { margin: 3px 0 0; font-size: .78rem; color: #55555e; line-height: 1.35; }
+    .pwa-close { position: absolute; top: 8px; right: 10px; background: none; border: none;
+      color: #9a9aa2; font-size: 1rem; cursor: pointer; padding: 4px; line-height: 1; }
+    .pwa-close:hover { color: var(--lfi-red); }
+    .pwa-install { background: var(--lfi-violet) !important; color: #fff !important; border-color: var(--lfi-violet) !important;
+      flex-shrink: 0; margin-left: auto; }
+    .pwa-install:hover { background: var(--lfi-violet-deep) !important; }
 
     /* 🔗 Liens conformes à la charte LFI (jamais le bleu par défaut du navigateur) */
     a { color: var(--lfi-violet); text-decoration: underline; text-decoration-color: rgba(76,2,151,.35); text-underline-offset: 2px; }
@@ -573,6 +600,19 @@
 
   </div>
 
+  <!-- 📱 POPUP D'INSTALLATION PWA -->
+  <div id="pwaBanner" class="pwa-banner hidden" role="dialog" aria-live="polite">
+    <div class="pwa-inner">
+      <img src="/icon-192.png" alt="" class="pwa-icon">
+      <div class="pwa-text">
+        <b id="pwaTitle">Installer l'appli Porte-à-Porte</b>
+        <p id="pwaMsg">Accès plein écran depuis votre écran d'accueil, sans passer par le navigateur.</p>
+      </div>
+      <button class="pwa-close" id="pwaClose" onclick="dismissPwa()" aria-label="Fermer">✕</button>
+      <button class="btn small pwa-install" id="pwaInstall" onclick="installPwa()">📲 Installer</button>
+    </div>
+  </div>
+
   <div class="footer-note">
     <span class="lock">🔒 Données chiffrées de bout en bout</span><br>
     PAP-LFI — La France Insoumise
@@ -865,6 +905,72 @@
       if (pathMatch) openToken(decodeURIComponent(pathMatch[1]));
       else { history.replaceState({}, '', '/'); show('view-home'); }
     })();
+
+    /* ============ 📱 PWA : installation sur l'écran d'accueil ============ */
+    let deferredPrompt = null;
+    const PWA_KEY = 'pap_lfi_pwa_dismissed';
+
+    // Chrome/Android : événement natif d'installation disponible
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      maybeShowPwa();
+    });
+
+    // App déjà installée ? On ne propose plus rien.
+    window.addEventListener('appinstalled', () => { deferredPrompt = null; hidePwa(); });
+
+    function isStandalone() {
+      return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+    }
+    function isIos() {
+      return /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream;
+    }
+    function pwaDismissed() {
+      try { return localStorage.getItem(PWA_KEY) === '1'; } catch { return false; }
+    }
+
+    function maybeShowPwa() {
+      if (isStandalone() || pwaDismissed()) return;
+      // Sur iOS, pas de beforeinstallprompt : on affiche les instructions Safari.
+      if (isIos()) {
+        document.getElementById('pwaTitle').textContent = 'Installer l\'appli sur iPhone';
+        document.getElementById('pwaMsg').innerHTML = 'Dans <b>Safari</b> : bouton Partager <b>⎋</b> puis <b>« Sur l\'écran d\'accueil »</b>.';
+        document.getElementById('pwaInstall').textContent = '📲 Comment faire';
+        document.getElementById('pwaBanner').classList.remove('hidden');
+        return;
+      }
+      // Android/Desktop : on attend que le prompt soit disponible.
+      if (deferredPrompt) document.getElementById('pwaBanner').classList.remove('hidden');
+    }
+
+    async function installPwa() {
+      if (isIos()) {
+        alert('Sur iPhone/iPad (Safari) :\n\n1. Touchez le bouton Partager (carré avec flèche)\n2. Faites défiler et choisissez « Sur l\'écran d\'accueil »\n3. Touchez « Ajouter »');
+        return;
+      }
+      if (!deferredPrompt) return;
+      deferredPrompt.prompt();
+      try { await deferredPrompt.userChoice; } catch (e) {}
+      deferredPrompt = null;
+      hidePwa();
+    }
+
+    function dismissPwa() {
+      hidePwa();
+      try { localStorage.setItem(PWA_KEY, '1'); } catch (e) {}
+    }
+    function hidePwa() { document.getElementById('pwaBanner').classList.add('hidden'); }
+
+    // Affichage différé (après 4 s) pour ne pas agresser à l'ouverture.
+    setTimeout(maybeShowPwa, 4000);
+
+    // Enregistrement du service worker (indispensable pour que l'install soit proposée).
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').catch(() => {});
+      });
+    }
   </script>
 </body>
 </html>

@@ -95,7 +95,23 @@ function sanitizeCode(value, maxLen = 50) {
 }
 
 // --- Servir les fichiers statiques (front) ---
-app.use(express.static(path.join(__dirname, '..', 'public')));
+// ⚠️ Le service worker DOIT être servi depuis la racine et ne jamais être mis en cache
+// par le navigateur (sinon les mises à jour restent bloquées). On le déclare avant le statique.
+app.get('/sw.js', (req, res) => {
+  res.set('Content-Type', 'application/javascript; charset=utf-8');
+  res.set('Service-Worker-Allowed', '/');
+  res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.sendFile(path.join(__dirname, '..', 'public', 'sw.js'));
+});
+
+app.use(express.static(path.join(__dirname, '..', 'public'), {
+  setHeaders: (res, filePath) => {
+    // Type MIME explicite pour le manifest (certains serveurs le servent en octet-stream).
+    if (filePath.endsWith('.webmanifest')) {
+      res.set('Content-Type', 'application/manifest+json; charset=utf-8');
+    }
+  }
+}));
 
 // Route SPA : /action/:uuid sert toujours l'app (le front lit l'UUID dans l'URL)
 app.get('/action/:uuid', (req, res) => {

@@ -1,0 +1,19 @@
+{
+  "name": "Porte-à-Porte — La France Insoumise",
+  "short_name": "PAP LFI",
+  "description": "Saisie militante de porte-à-porte : notez chaque porte, compilez les résultats par rue. Données chiffrées.",
+  "lang": "fr",
+  "dir": "ltr",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F7F4EF",
+  "theme_color": "#4C0297",
+  "categories": ["productivity", "social"],
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
