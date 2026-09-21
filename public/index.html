@@ -255,6 +255,15 @@
     .objection .obj-q { font-weight:800; color:var(--lfi-violet-deep); display:block; margin-bottom:4px; }
     .obj-a { color:#33333a; }
 
+    /* 🔗 Liens conformes à la charte LFI (jamais le bleu par défaut du navigateur) */
+    a { color: var(--lfi-violet); text-decoration: underline; text-decoration-color: rgba(76,2,151,.35); text-underline-offset: 2px; }
+    a:hover { color: var(--lfi-red); text-decoration-color: rgba(225,0,15,.5); }
+    a:visited { color: var(--lfi-violet-deep); }
+    /* Sur fond violet : lien en rouge LFI, lisible et dans la charte */
+    .guide-intro a, .acc-body a { font-weight: 600; }
+    .btn.secondary.small { color: var(--lfi-violet); text-decoration: none; }
+    .btn.secondary.small:hover { color: var(--lfi-white); }
+
     .footer-note { text-align: center; font-size: .74rem; color: #a09b92; padding: 18px 10px; }
     .footer-note .lock { color: var(--lfi-red); font-weight: 700; }
     .muted { color: #8a857c; font-size: .85rem; line-height:1.45; }
@@ -316,7 +325,7 @@
             <p style="font-size:.85rem;margin-top:8px"><b>À la fin :</b> prendre le contact, noter le souci remonté (logement, propreté, transports…), proposer l'inscription sur les listes électorales.</p>
             <p class="muted" style="margin-top:10px">Le détail complet (objections, suivi, permanence) est dans l'onglet 📖 Conseils.</p>
             <p style="font-size:.82rem;margin-top:10px">
-              📄 Source : <a href="https://infos.actionpopulaire.fr/wp-content/uploads/2023/08/Livret-de-lanimateur-et-de-lanimatrice-2023.pdf" target="_blank" rel="noopener"><b>Livret de l'animateur et de l'animatrice de groupe d'action</b> (LFI, 2023) ↗</a>
+              📄 Source : <a href="https://infos.actionpopulaire.fr/wp-content/uploads/2023/08/Livret-de-lanimateur-et-de-lanimatrice-2023.pdf" target="_blank" rel="noopener" style="color:var(--lfi-red);text-decoration:underline"><b>Livret de l'animateur et de l'animatrice de groupe d'action</b> (LFI, 2023) ↗</a>
             </p>
           </div>
         </div>
