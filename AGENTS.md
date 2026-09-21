@@ -106,11 +106,19 @@ le `fetch()` est silencieusement bloqué par le navigateur.
 
 ---
 
-## 📜 RGPD
+## 📜 RGPD — arbitrage de Chapi (2026-09-21)
 
-- `RETENTION_DAYS = 30` : purge auto des actions (et portes en cascade) au démarrage + quotidiennement.
-- Bouton « 🗑️ Supprimer les données » → `purgeData()` avec **double confirmation**.
-- L'adresse étant une donnée personnelle, ne jamais la logger ni l'exposer en clair côté serveur.
+**Décision product owner** : pas de contrainte RGPD lourde **tant qu'on ne note pas le nom
+des locataires**. Les locataires restent **anonymes** (pas de nom, pas d'identité).
+Cet arbitrage est volontaire : **ne pas re-rajouter de prudence RGPD non demandée**.
+
+Points de vigilance conservés (compatibles avec l'arbitrage) :
+- ⚠️ Le champ **`Détails` est libre** → consigne terrain : **NE JAMAIS y écrire de nom de locataire**.
+  C'est la seule fuite possible vers des données nominatives.
+- La **purge automatique à 30 jours** (`RETENTION_DAYS`) reste en place : durée limitée = posture solide.
+- L'adresse + le type d'interaction constituent une donnée d'opinion politique ; c'est le
+  **croisement** qui est sensible, pas le nom. Une donnée **non nominative** + **purge 30 j** = défendable.
+- Ne jamais logger l'adresse en clair côté serveur.
 
 ---
 

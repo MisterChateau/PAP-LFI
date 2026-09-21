@@ -83,6 +83,8 @@ npm start   # ou : npm run dev
 - Les données restent chiffrées AES-256 en BDD même si le serveur est compromis
 
 ## Conformité RGPD
+- **Anonymat des locataires** : aucune identité/nom n'est saisi (arbitrage : pas de nom = pas de contrainte lourde).
+- ⚠️ **Ne jamais écrire de nom de locataire** dans le champ « Détails » (champ libre).
 - **Rétention limitée** : les données (opinion politique + adresse) sont automatiquement purgées **30 jours** après la création de l'action (`src/server.js` → `RETENTION_DAYS`)
 - **Purge automatique** : exécutée au démarrage du serveur + quotidiennement (pas besoin de cron externe)
 - **Droit à l'effacement** : bouton « 🗑️ Supprimer les données » dans la compilation (avec double confirmation) pour effacer immédiatement toutes les portes d'une action
