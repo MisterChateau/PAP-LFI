@@ -255,6 +255,13 @@
     .objection .obj-q { font-weight:800; color:var(--lfi-violet-deep); display:block; margin-bottom:4px; }
     .obj-a { color:#33333a; }
 
+    /* 📇 Bloc prise de contact (Action Populaire) */
+    .contact-box { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin: 14px 0 4px;
+      padding: 12px 14px; background: var(--lfi-violet-soft); border: 1px solid rgba(76,2,151,.25); border-radius: 12px; }
+    .contact-box b { color: var(--lfi-violet-deep); font-size: .9rem; }
+    a.btn.small.contact-btn { background: var(--lfi-violet); color: var(--lfi-white) !important; text-decoration: none; border-color: var(--lfi-violet); white-space: nowrap; }
+    a.btn.small.contact-btn:hover { background: var(--lfi-violet-deep); }
+
     /* 🔗 Liens conformes à la charte LFI (jamais le bleu par défaut du navigateur) */
     a { color: var(--lfi-violet); text-decoration: underline; text-decoration-color: rgba(76,2,151,.35); text-underline-offset: 2px; }
     a:hover { color: var(--lfi-red); text-decoration-color: rgba(225,0,15,.5); }
@@ -389,6 +396,16 @@
           <input type="text" id="team" placeholder="Ex : A3, B1..." autocomplete="off">
           <label>Détails / notes (optionnel)</label>
           <textarea id="details" placeholder="Infos complémentaires..."></textarea>
+
+          <!-- 📇 Prise de contact : lien direct vers la fiche Action Populaire -->
+          <div class="contact-box">
+            <div style="flex:1;min-width:180px">
+              <b>📇 Prise de contact ?</b>
+              <p class="muted" style="font-size:.8rem;margin:4px 0 0">Enregistrez la personne (nom, tél, mail) sur Action Populaire.</p>
+            </div>
+            <a class="btn small contact-btn" href="https://actionpopulaire.fr/contacts/creer/" target="_blank" rel="noopener">➕ Créer le contact</a>
+          </div>
+
           <button class="btn" onclick="submitDoor()">💾 Enregistrer</button>
           <p class="muted" style="font-size:.84rem;margin-top:10px">* Champs obligatoires. Le GPS est facultatif : la rue peut être saisie à la main.</p>
         </div>
