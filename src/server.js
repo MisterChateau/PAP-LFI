@@ -39,7 +39,9 @@ app.use(helmet({
       scriptSrcAttr: ["'unsafe-inline'"],
       styleSrc: ["'self'", "'unsafe-inline'"],
       imgSrc: ["'self'", "data:"],
-      connectSrc: ["'self'"],
+      // Nominatim (OpenStreetMap) : aide optionnelle au remplissage de l'adresse via GPS.
+      // On n'autorise QUE ce domaine, et aucune donnée d'identité n'est transmise.
+      connectSrc: ["'self'", "https://nominatim.openstreetmap.org"],
       objectSrc: ["'none'"],
       frameAncestors: ["'none'"]
     }
@@ -208,6 +210,9 @@ app.post('/api/actions/:id/doors', writeLimiter, async (req, res) => {
     // La clé doit correspondre à celle qui a créé l'action (comparaison à temps constant)
     if (!safeEqual(hashSecret(cipherKey), action.master_key_hash)) {
       return res.status(403).json({ error: 'Clé de chiffrement invalide.' });
+    }
+    if (!sBuilding) {
+      return res.status(400).json({ error: 'Le numéro et la rue sont obligatoires.' });
     }
     if (!sFloor && !sDoor) {
       return res.status(400).json({ error: 'Précisez au moins l\'étage ou le numéro de porte.' });

@@ -9,9 +9,10 @@ Aujourd'hui, le porte-à-porte se fait sur **papier** : chaque équipe note éta
 
 ## Fonctionnalités
 - 📱 **Saisie mobile ultra-rapide** : gros boutons, peu de champs, pensée pour le terrain
-- 🚪 Chaque porte : étage, numéro, immeuble, type d'interaction, notes
+- 🚪 Chaque porte : **n° de rue + rue (obligatoires)**, étage, n° de porte, type d'interaction, notes
+- 📍 **Aide GPS optionnelle** : bouton pour pré-remplir la rue depuis la position (reverse-geocoding Nominatim/OSM), jamais bloquant
 - 🔐 **Chiffrement AES-256-GCM** : les données sont chiffrées avec la clé maître, illisibles même si la BDD est volée
-- 📊 **Compilation automatique** : tableau + export CSV pour le créateur
+- 📊 **Compilation automatique** : tableau + export CSV, **triés par rue → n° de rue → date**
 - 🕵️ **Anonymat des militants** : pas de compte, pas d'info perso, juste un code d'équipe (hashé)
 
 ## Types d'interaction

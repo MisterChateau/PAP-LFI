@@ -134,6 +134,8 @@
     .btn.danger:hover { background: #a93226; }
     .btn:disabled { opacity: .5; cursor: not-allowed; }
     .btn.small { padding: 12px; font-size: .8rem; border-radius: 10px; }
+    .gps-btn { width: 100%; margin: 4px 0 12px; background: var(--lfi-violet-soft); color: #3a2360; border: 1px solid #d3c9e8; font-weight: 800; }
+    .gps-btn:disabled { opacity: .6; }
 
     /* CTA créer une action */
     .cta {
@@ -348,6 +350,17 @@
           <h2>🚪 Nouvelle porte</h2>
           <div class="row">
             <div>
+              <label>N° rue <span style="color:var(--lfi-red)">*</span></label>
+              <input type="text" id="streetNumber" placeholder="Ex : 12" inputmode="numeric">
+            </div>
+            <div>
+              <label>Rue <span style="color:var(--lfi-red)">*</span></label>
+              <input type="text" id="street" placeholder="Ex : rue de la Paix">
+            </div>
+          </div>
+          <button type="button" class="btn secondary small gps-btn" id="gpsBtn" onclick="fillFromGPS()">📍 GPS (optionnel — pré-remplir la rue)</button>
+          <div class="row">
+            <div>
               <label>Étage</label>
               <input type="text" id="floor" placeholder="Ex : 3" inputmode="numeric">
             </div>
@@ -356,8 +369,6 @@
               <input type="text" id="doorNumber" placeholder="Ex : 12 ou B">
             </div>
           </div>
-          <label>Immeuble / rue (optionnel)</label>
-          <input type="text" id="building" placeholder="Ex : 12 rue de la Paix">
           <label>Interaction</label>
           <div class="interactions" id="interactionsBox"></div>
           <label>Équipe (optionnel — suivi)</label>
@@ -365,6 +376,7 @@
           <label>Détails / notes (optionnel)</label>
           <textarea id="details" placeholder="Infos complémentaires..."></textarea>
           <button class="btn" onclick="submitDoor()">💾 Enregistrer</button>
+          <p class="muted" style="font-size:.78rem;margin-top:10px">* N° de rue et Rue sont obligatoires (nécessaires pour le regroupement par adresse). Le GPS est une aide facultative : vous pouvez toujours saisir la rue à la main.</p>
         </div>
       </div>
 
@@ -379,7 +391,7 @@
           <div class="table-wrap">
             <table id="compilTable">
               <thead>
-                <tr><th>Étage</th><th>N°</th><th>Immeuble</th><th>Interaction</th><th>Détails</th><th>Équipe</th><th>Heure</th></tr>
+                <tr><th>Rue</th><th>N°</th><th>Étage</th><th>N° porte</th><th>Interaction</th><th>Détails</th><th>Équipe</th><th>Heure</th></tr>
               </thead>
               <tbody></tbody>
             </table>
@@ -622,7 +634,7 @@
         if (r.ok) { const d = await r.json(); state.actionName = d.action.name; document.getElementById('actionBarName').innerHTML = '<span class="dot">●</span> ' + esc(d.action.name); }
       } catch(e) {}
       state.selectedInteraction = null;
-      ['floor','doorNumber','building','team','details'].forEach(id => document.getElementById(id).value='');
+      ['floor','doorNumber','streetNumber','street','team','details'].forEach(id => { const el = document.getElementById(id); if (el) el.value=''; });
       hideStatus(); renderInteractions(); updateCounter();
     }
 
@@ -651,23 +663,72 @@
       } catch(e) {}
     }
 
+    // 📍 Aide facultative : remplissage de la rue depuis la position GPS (indoor OK : on vise la rue).
+    // Reverse-geocoding via Nominatim (OpenStreetMap). Aucune coordonnée n'est stockée :
+    // seul le texte corrigé par le militant est enregistré. Jamais bloquant : si ça échoue,
+    // la saisie manuelle reste pleinement disponible.
+    async function fillFromGPS() {
+      const btn = document.getElementById('gpsBtn');
+      const streetEl = document.getElementById('street');
+      const numEl = document.getElementById('streetNumber');
+      // Anti-écrasement : ne pas remplacer une saisie manuelle sans confirmation.
+      if (streetEl.value.trim() && !confirm('Remplacer la rue déjà saisie par la position GPS ?')) return;
+      if (!('geolocation' in navigator)) { showStatus('error', 'Géolocalisation non supportée. Saisissez la rue à la main.'); return; }
+      btn.disabled = true; const old = btn.textContent; btn.textContent = '📍 Localisation…';
+      const fail = (msg) => { showStatus('error', msg); btn.disabled = false; btn.textContent = old; };
+      navigator.geolocation.getCurrentPosition(async (pos) => {
+        try {
+          const { latitude: lat, longitude: lon } = pos.coords;
+          const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}&addressdetails=1&accept-language=fr`;
+          // Timeout court : Nominatim est un service tiers, optionnel → ne jamais faire attendre longtemps.
+          const ctrl = new AbortController();
+          const t = setTimeout(() => ctrl.abort(), 6000);
+          let d;
+          try {
+            const r = await fetch(url, { headers: { 'Accept': 'application/json' }, signal: ctrl.signal });
+            d = await r.json();
+          } finally { clearTimeout(t); }
+          const a = d.address || {};
+          const num = a.house_number || '';
+          const street = a.road || a.pedestrian || a.footway || a.path || '';
+          const city = a.city || a.town || a.village || a.municipality || '';
+          if (!street) return fail('Rue introuvable au point GPS. Saisissez-la à la main.');
+          streetEl.value = city ? `${street} (${city})` : street;
+          if (num) numEl.value = num;
+          showStatus('success', `📍 Adresse pré-remplie${num ? '' : ' (n° à compléter)'}. Corrigez si besoin.`);
+        } catch (e) {
+          fail('GPS indisponible. Saisissez la rue à la main.');
+        } finally {
+          btn.disabled = false; btn.textContent = old;
+        }
+      }, (err) => {
+        fail(err.code === 1 ? 'Position refusée. Saisissez la rue à la main.' : 'Position indisponible. Saisissez la rue à la main.');
+      }, { enableHighAccuracy: false, timeout: 6000, maximumAge: 120000 });
+    }
+
     async function submitDoor() {
       const floor = document.getElementById('floor').value.trim();
       const doorNumber = document.getElementById('doorNumber').value.trim();
-      const building = document.getElementById('building').value.trim();
+      const streetNumber = document.getElementById('streetNumber').value.trim();
+      const street = document.getElementById('street').value.trim();
       const details = document.getElementById('details').value.trim();
       const team = document.getElementById('team').value.trim();
       const interaction = state.selectedInteraction;
-      if (!floor && !doorNumber) { showStatus('error', 'Indiquez au moins l\'étage ou le n° de porte.'); return; }
+      if (!streetNumber) { showStatus('error', 'Le N° de rue est obligatoire.'); return; }
+      if (!street) { showStatus('error', 'La rue est obligatoire.'); return; }
       if (!interaction) { showStatus('error', 'Choisissez un type d\'interaction.'); return; }
+      // On reconstruit l'adresse dans le champ historique `building` (colonne DB inchangée),
+      // au format uniforme « <n°> <rue> » pour permettre le regroupement par numéro de rue.
+      const building = `${streetNumber} ${street}`;
       try {
         const r = await fetch(`/api/actions/${state.actionId}/doors`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ teamCode: team || null, cipherKey: state.cipherKey, building, floor, doorNumber, interaction, details }) });
         const d = await r.json();
         if (!r.ok) throw new Error(d.error || 'Erreur');
         showStatus('success', '✅ Porte enregistrée !');
-        document.getElementById('floor').value=''; document.getElementById('doorNumber').value=''; document.getElementById('details').value='';
+        // On NE vide PAS streetNumber/street : la rue reste pré-remplie pour la porte suivante.
+        document.getElementById('details').value=''; document.getElementById('doorNumber').value=''; document.getElementById('floor').value='';
         state.selectedInteraction = null; renderInteractions(); updateCounter();
-        document.getElementById('floor').focus();
+        document.getElementById('streetNumber').focus();
       } catch (e) { showStatus('error', 'Erreur : ' + e.message); }
     }
 
@@ -692,12 +753,28 @@
           Object.entries(counts).forEach(([k,v]) => { const label = (INTERACTIONS.find(i=>i.id===k)||{}).label || k; sum += `<span class="chip">${label} : ${v}</span> `; });
           sum += '</div>'; statsEl.innerHTML += sum;
         }
-        document.querySelector('#compilTable thead tr').innerHTML = '<th>Étage</th><th>N°</th><th>Immeuble</th><th>Interaction</th><th>Détails</th><th>Équipe</th><th>Heure</th>';
+        document.querySelector('#compilTable thead tr').innerHTML = '<th>Rue</th><th>N°</th><th>Étage</th><th>N° porte</th><th>Interaction</th><th>Détails</th><th>Équipe</th><th>Heure</th>';
+        // Tri : regroupé par rue → puis par numéro de rue (numérique) → puis par date.
+        // On parse le champ `building` (colonne DB) au format « <n°> <rue> ».
+        const parseAddr = (b) => {
+          const s = String(b == null ? '' : b).trim();
+          const m = s.match(/^(\d+)\s*[\s,]*\s*(.*)$/); // « 12 rue X » ou « 12, rue X »
+          if (m) return { num: parseInt(m[1], 10), numRaw: m[1], street: (m[2] || '').trim() };
+          return { num: Infinity, numRaw: '', street: s }; // pas de numéro : en fin de groupe
+        };
+        const sorted = [...d.doors].sort((a, b) => {
+          const A = parseAddr(a.building), B = parseAddr(b.building);
+          const streetCmp = A.street.localeCompare(B.street, 'fr', { sensitivity: 'base' });
+          if (streetCmp !== 0) return streetCmp;
+          if (A.num !== B.num) return A.num - B.num;
+          return new Date(a.createdAt || 0) - new Date(b.createdAt || 0);
+        });
         // Encodage HTML de chaque valeur pour éviter tout XSS à l'affichage
-        d.doors.forEach(door => {
+        sorted.forEach(door => {
           const tr = document.createElement('tr');
           const interLabel = (INTERACTIONS.find(i=>i.id===door.interaction)||{}).label || door.interaction || '';
-          tr.innerHTML = `<td>${esc(door.floor)}</td><td>${esc(door.doorNumber)}</td><td>${esc(door.building)}</td><td>${esc(interLabel)}</td><td>${esc(door.details)}</td><td>${esc(door.team)}</td><td>${door.createdAt?new Date(door.createdAt).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}):''}</td>`;
+          const addr = parseAddr(door.building);
+          tr.innerHTML = `<td>${esc(addr.street)}</td><td>${esc(addr.numRaw)}</td><td>${esc(door.floor)}</td><td>${esc(door.doorNumber)}</td><td>${esc(interLabel)}</td><td>${esc(door.details)}</td><td>${esc(door.team)}</td><td>${door.createdAt?new Date(door.createdAt).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}):''}</td>`;
           tbody.appendChild(tr);
         });
       } catch (e) { statsEl.innerHTML = `<div class="status error">Erreur : ${e.message}${e.message.includes('incorrecte')?' — vérifiez la clé.':''}</div>`; }
@@ -705,7 +782,7 @@
 
     function exportCsv() {
       const tbody = document.querySelector('#compilTable tbody'); const rows = [...tbody.querySelectorAll('tr')];
-      let csv = 'Étage;N°;Immeuble;Interaction;Détails;Équipe;Heure\n';
+      let csv = 'Rue;N°;Étage;N° porte;Interaction;Détails;Équipe;Heure\n';
       rows.forEach(tr => { const cols = [...tr.querySelectorAll('td')].map(td => '"'+(td.textContent||'').replace(/"/g,'""')+'"'); csv += cols.join(';')+'\n'; });
       const blob = new Blob(['\uFEFF'+csv], { type: 'text/csv;charset=utf-8;' });
       const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download='pap-lfi-compilation.csv'; a.click();
