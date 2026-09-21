@@ -261,8 +261,9 @@
     a:visited { color: var(--lfi-violet-deep); }
     /* Sur fond violet : lien en rouge LFI, lisible et dans la charte */
     .guide-intro a, .acc-body a { font-weight: 600; }
-    .btn.secondary.small { color: var(--lfi-violet); text-decoration: none; }
-    .btn.secondary.small:hover { color: var(--lfi-white); }
+    /* Boutons-lien vers le livret : fond violet LFI, texte blanc (contraste AA) */
+    a.btn.secondary.small { background: var(--lfi-violet); color: var(--lfi-white) !important; text-decoration: none; border-color: var(--lfi-violet); }
+    a.btn.secondary.small:hover { background: var(--lfi-violet-deep); color: var(--lfi-white) !important; }
 
     .footer-note { text-align: center; font-size: .74rem; color: #a09b92; padding: 18px 10px; }
     .footer-note .lock { color: var(--lfi-red); font-weight: 700; }
