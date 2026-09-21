@@ -277,16 +277,16 @@
       box-shadow: 0 12px 34px rgba(16,16,20,.30); padding: 14px; max-width: 520px; margin: 0 auto;
       animation: pwaUp .32s ease-out; }
     @keyframes pwaUp { from { transform: translateY(18px); opacity: 0 } to { transform: translateY(0); opacity: 1 } }
-    .pwa-inner { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; justify-content: center; }
+    .pwa-inner { display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; position: relative; }
     .pwa-icon { width: 46px; height: 46px; border-radius: 12px; flex-shrink: 0; }
-    .pwa-text { flex: 1; min-width: 150px; text-align: center; }
+    .pwa-text { width: 100%; }
     .pwa-text b { font-size: .92rem; color: var(--lfi-violet-deep); }
     .pwa-text p { margin: 3px 0 0; font-size: .78rem; color: #55555e; line-height: 1.35; }
-    .pwa-close { position: absolute; top: 8px; right: 10px; background: none; border: none;
+    .pwa-close { position: absolute; top: -4px; right: -2px; background: none; border: none;
       color: #9a9aa2; font-size: 1rem; cursor: pointer; padding: 4px; line-height: 1; }
     .pwa-close:hover { color: var(--lfi-red); }
     .pwa-install { background: var(--lfi-violet) !important; color: #fff !important; border-color: var(--lfi-violet) !important;
-      flex-shrink: 0; margin: 0 auto; }
+      flex-shrink: 0; margin: 2px auto 0; }
     .pwa-install:hover { background: var(--lfi-violet-deep) !important; }
 
     /* 🔗 Liens conformes à la charte LFI (jamais le bleu par défaut du navigateur) */
