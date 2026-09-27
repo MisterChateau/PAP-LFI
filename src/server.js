@@ -49,26 +49,67 @@ app.use(helmet({
   referrerPolicy: { policy: 'no-referrer' }
 }));
 
-// 🔒 Rate limiting global : protège contre la saturation (création massive d'actions,
-// spam de portes). 100 requêtes / 15 min par IP, avec une limite plus stricte
-// sur les routes d'écriture.
+// 🔒 Derrière un proxy (Render), on fait confiance à 1 niveau de proxy pour que
+// req.ip reflète la VRAIE IP du client (X-Forwarded-For) et non celle du proxy.
+// Sans ceci, TOUS les clients apparaissent avec l'IP du proxy Render → les limiteurs
+// par IP deviennent globalisés (tout le monde dans le même seau).
+app.set('trust proxy', 1);
+
+// 🔒 Rate limiting GLOBAL : garde-fou anti-abus (saturation, boucles folles).
+// ⚠️ Volontairement large : sur le terrain, plusieurs militants peuvent partager
+// une même IP publique (wifi de permanence, HOTSPOT, ou CGNAT des opérateurs mobiles
+// où des milliers d'abonnés sortent derrière la même IP). Un plafond trop bas
+// bloquerait toute une équipe pendant 15 min.
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 300,                  // 300 requêtes globales / 15 min
+  max: 1000,                 // 1000 requêtes globales / 15 min par IP
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Trop de requêtes. Réessayez dans quelques minutes.' }
 });
 app.use('/api/', limiter);
 
-// Limite d'écriture plus stricte (création d'action = très sensible, spam possible)
-const writeLimiter = rateLimit({
+// 🔎 Diagnostic CGNAT / proxy (DÉSACTIVÉ par défaut).
+// Activer avec la variable d'env DEBUG_IP=1 pendant une action terrain.
+// Sert à vérifier combien d'IP distinctes arrivent réellement côté serveur :
+// si plusieurs militants en 5G partagent la même IP → CGNAT de l'opérateur.
+// Ne stocke rien : juste un compteur en mémoire (remis à zéro au redéploiement).
+const DEBUG_IP = process.env.DEBUG_IP === '1';
+const seenIps = new Map(); // ip → { count, firstSeen, lastSeen, uas }
+if (DEBUG_IP) {
+  console.warn('🔎 DEBUG_IP activé : /api/debug/ip est exposé (à désactiver après le test).');
+}
+app.get('/api/debug/ip', (req, res) => {
+  if (!DEBUG_IP) return res.status(404).json({ error: 'Not found' });
+  const ip = req.ip;
+  const rec = seenIps.get(ip) || { count: 0, firstSeen: new Date().toISOString(), uas: new Set() };
+  rec.count++;
+  rec.lastSeen = new Date().toISOString();
+  const ua = String(req.headers['user-agent'] || '').slice(0, 80);
+  if (rec.uas.size < 20) rec.uas.add(ua);
+  seenIps.set(ip, rec);
+  res.json({
+    seenIp: ip,
+    xForwardedFor: req.headers['x-forwarded-for'] || null,
+    distinctIpsSoFar: seenIps.size,
+    ips: [...seenIps.entries()].map(([k, v]) => ({ ip: k, count: v.count, lastSeen: v.lastSeen, uas: [...v.uas] }))
+  });
+});
+
+// 🔒 Limite STRICTE réservée à la CRÉATION d'action (seule vraie surface de spam :
+// endpoint non authentifié qui insère en base).
+const createLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100, // 100 écritures / 15 min par IP
+  max: 20, // 20 créations d'action / 15 min par IP
   standardHeaders: true,
   legacyHeaders: false,
-  message: { error: 'Trop d\'écritures. Réessayez dans quelques minutes.' }
+  message: { error: 'Trop de créations d\'action. Réessayez dans quelques minutes.' }
 });
+
+// ⚠️ Plus de writeLimiter sur /doors : la protection réelle est la CLÉ MAÎTRE
+// (une mauvaise clé → 403). Limiter par IP y exposait un risque terrain :
+// plusieurs militants sur la même IP (wifi partagé / CGNAT mobile) se bloquaient
+// mutuellement après ~100 écritures cumulées.
 
 // --- Sanitisation des entrées ---
 // Nettoie une chaîne : retire caractères de contrôle, balises HTML, tronque.
@@ -152,7 +193,7 @@ function isValidUUID(v) { return typeof v === 'string' && UUID_RE.test(v); }
  * lien opaque /r/<token> ; aucune clé à retenir côté utilisateur.
  * Retourne l'UUID de l'action + le lien opaque à partager.
  */
-app.post('/api/actions', writeLimiter, async (req, res) => {
+app.post('/api/actions', createLimiter, async (req, res) => {
   try {
     const { name } = req.body || {};
     const cleanName = sanitizeInput(name, 150);
@@ -191,7 +232,7 @@ app.post('/api/actions', writeLimiter, async (req, res) => {
  * Body : { teamCode, cipherKey, building, floor, doorNumber, interaction, details }
  * Toutes les données sont chiffrées avec cipherKey (la clé maître) avant stockage.
  */
-app.post('/api/actions/:id/doors', writeLimiter, async (req, res) => {
+app.post('/api/actions/:id/doors', async (req, res) => {
   try {
     const actionId = req.params.id;
     if (!isValidUUID(actionId)) {
@@ -266,7 +307,7 @@ app.post('/api/actions/:id/doors', writeLimiter, async (req, res) => {
  * proxy intermédiaire.
  * Body : { masterKey: string }
  */
-app.post('/api/actions/:id/export', writeLimiter, async (req, res) => {
+app.post('/api/actions/:id/export', async (req, res) => {
   try {
     const actionId = req.params.id;
     if (!isValidUUID(actionId)) {
@@ -370,7 +411,7 @@ async function purgeExpiredActions() {
  * la clé maître (le créateur). Conforme RGPD (droit à l'effacement).
  * Body : { masterKey: string }
  */
-app.post('/api/actions/:id/purge', writeLimiter, async (req, res) => {
+app.post('/api/actions/:id/purge', async (req, res) => {
   try {
     const actionId = req.params.id;
     if (!isValidUUID(actionId)) {

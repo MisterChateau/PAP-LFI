@@ -6,3 +6,6 @@ data/*.db-shm
 .env
 *.log
 .DS_Store
+
+# Données locales de test (serveur de démo)
+demo/data/

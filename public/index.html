@@ -299,6 +299,16 @@
     a.btn.secondary.small { background: var(--lfi-violet); color: var(--lfi-white) !important; text-decoration: none; border-color: var(--lfi-violet); }
     a.btn.secondary.small:hover { background: var(--lfi-violet-deep); color: var(--lfi-white) !important; }
 
+    /* 🔌 Badge de synchronisation (offline-first) */
+    .sync-badge { display: flex; align-items: center; gap: 8px; padding: 9px 13px; border-radius: 11px;
+      font-size: .78rem; font-weight: 700; margin-bottom: 14px; border: 1px solid transparent; }
+    .sync-badge.ok { background: #e5f4e8; color: #23704a; border-color: #bfe3c8; }
+    .sync-badge.pending { background: #fff6e5; color: #8a6100; border-color: #f2dfae; }
+    .sync-badge.offline { background: var(--lfi-red-soft); color: #c62828; border-color: #f3c4c0; }
+    .sync-badge .spin { display: inline-block; animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .sync-badge .retry-link { margin-left: auto; background: none; border: none; color: inherit; font-weight: 800; text-decoration: underline; cursor: pointer; font-size: .78rem; }
+
     .footer-note { text-align: center; font-size: .74rem; color: #a09b92; padding: 18px 10px; }
     .footer-note .lock { color: var(--lfi-red); font-weight: 700; }
     .muted { color: #8a857c; font-size: .85rem; line-height:1.45; }
@@ -391,6 +401,7 @@
       <!-- SAISIE -->
       <div id="sub-saisie">
         <div class="card">
+          <div class="sync-badge ok" id="syncBadge"></div>
           <div class="big-counter" id="counter"></div>
           <div class="progress"><div class="fill" id="progressFill"></div></div>
           <hr style="border:none;border-top:1px solid var(--lfi-border);margin:18px 0">
@@ -630,6 +641,94 @@
     ];
     const PROGRESS_TARGET = 100; // objectif indicatif pour la barre
 
+    /* ===== 🔌 FILE D'ATTENTE OFFLINE-FIRST =====
+       Principe : chaque porte est écrite LOCALEMENT (localStorage) AVANT tout réseau.
+       Un « worker » (flushQueue) la renvoie dès que le réseau revient.
+       Le formulaire n'est JAMAIS bloqué par une coupure (cave, cage d'escalier).
+       File locale PAR ACTION (clé : pap_lfi_queue_<actionId>) → pas de mélange entre actions. */
+    const QUEUE_PREFIX = 'pap_lfi_queue_';
+    const MAX_TRIES = 8; // au-delà, on considère l'envoi abandonné (4xx exclu, qui lui est définitif)
+
+    const queueKey = () => QUEUE_PREFIX + (state.actionId || 'none');
+    function readQueue() {
+      try { return JSON.parse(localStorage.getItem(queueKey()) || '[]'); } catch { return []; }
+    }
+    function writeQueue(q) {
+      try { localStorage.setItem(queueKey(), JSON.stringify(q)); } catch (e) {}
+      updateSyncBadge();
+    }
+    function enqueueDoor(payload) {
+      const q = readQueue();
+      q.push({ id: (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random()), payload, tries: 0, addedAt: Date.now() });
+      writeQueue(q);
+    }
+    function removeFromQueue(id) { writeQueue(readQueue().filter(x => x.id !== id)); }
+
+    let flushing = false;
+    async function flushQueue() {
+      if (flushing || !state.actionId) return;
+      if (readQueue().length === 0) { updateSyncBadge(); return; }
+      flushing = true; updateSyncBadge();
+      // On relit la file à chaque itération : de nouvelles portes peuvent s'ajouter pendant l'envoi.
+      for (let guard = 0; guard < 200; guard++) {
+        const q = readQueue();
+        if (q.length === 0) break;
+        const item = q[0];
+        try {
+          const r = await fetch(`/api/actions/${item.payload.actionId}/doors`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(item.payload)
+          });
+          if (r.ok || (r.status >= 400 && r.status < 500)) {
+            // 2xx = enregistré ; 4xx = définitif (clé invalide, données rejetées) → on retire.
+            // 429 (trop d'écritures) est un 4xx mais TEMPORAIRE → on garde pour réessayer.
+            if (r.status === 429) { await bumpTries(item); break; }
+            removeFromQueue(item.id);
+          } else {
+            // 5xx : erreur serveur passagère → on garde, on retentera.
+            await bumpTries(item); break;
+          }
+        } catch (e) {
+          // Réseau coupé → on s'arrête, on retentera plus tard.
+          await bumpTries(item); break;
+        }
+      }
+      flushing = false; updateSyncBadge();
+    }
+
+    async function bumpTries(item) {
+      const q = readQueue();
+      const it = q.find(x => x.id === item.id);
+      if (!it) return;
+      it.tries = (it.tries || 0) + 1;
+      // Abandon au bout de MAX_TRIES : on NE jette PAS la porte (elle reste en file,
+      // affichée comme « bloquée »), pour ne jamais perdre une saisie de terrain.
+      writeQueue(q);
+      await new Promise(r => setTimeout(r, 800)); // petit backoff
+    }
+
+    function updateSyncBadge() {
+      const el = document.getElementById('syncBadge');
+      if (!el) return;
+      const n = readQueue().length;
+      const online = navigator.onLine;
+      if (n === 0 && online) { el.className = 'sync-badge ok'; el.innerHTML = '✅ Tout est synchronisé'; return; }
+      if (!online) {
+        el.className = 'sync-badge offline';
+        el.innerHTML = `📴 Hors-ligne — ${n} porte${n > 1 ? 's' : ''} en attente d'envoi`;
+        return;
+      }
+      el.className = 'sync-badge pending';
+      el.innerHTML = `${flushing ? '<span class="spin">🔄</span>' : '⏳'} ${n} porte${n > 1 ? 's' : ''} en attente de synchronisation` +
+        ` <button class="retry-link" onclick="flushQueue()">Réessayer</button>`;
+    }
+
+    // Déclencheurs du worker : retour du réseau, retour sur l'appli, filet périodique.
+    window.addEventListener('online', () => { updateSyncBadge(); flushQueue(); });
+    window.addEventListener('offline', updateSyncBadge);
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) flushQueue(); });
+    setInterval(() => { flushQueue(); }, 15000);
+
     let state = {
       actionId: null, cipherKey: '', actionName: '', selectedInteraction: null
     };
@@ -724,6 +823,9 @@
       state.selectedInteraction = null;
       ['floor','doorNumber','streetNumber','street','team','details'].forEach(id => { const el = document.getElementById(id); if (el) el.value=''; });
       hideStatus(); renderInteractions(); updateCounter();
+      updateSyncBadge();
+      // 🔌 Au retour sur l'appli : on tente de vider ce qui restait en attente d'une session précédente.
+      if (navigator.onLine) flushQueue();
     }
 
     function renderInteractions() {
@@ -808,16 +910,28 @@
       // On reconstruit l'adresse dans le champ historique `building` (colonne DB inchangée),
       // au format uniforme « <n°> <rue> » pour permettre le regroupement par numéro de rue.
       const building = `${streetNumber} ${street}`;
-      try {
-        const r = await fetch(`/api/actions/${state.actionId}/doors`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ teamCode: team || null, cipherKey: state.cipherKey, building, floor, doorNumber, interaction, details }) });
-        const d = await r.json();
-        if (!r.ok) throw new Error(d.error || 'Erreur');
+      const payload = { actionId: state.actionId, cipherKey: state.cipherKey, teamCode: team || null, building, floor, doorNumber, interaction, details };
+
+      // 🔌 OFFLINE-FIRST : on écrit LOCALEMENT d'abord → la porte n'est jamais perdue,
+      // même si le réseau tombe (cave, cage d'escalier). Le formulaire n'est jamais bloqué.
+      enqueueDoor(payload);
+      clearFormKeepStreet();
+      if (navigator.onLine) {
         showStatus('success', '✅ Porte enregistrée !');
-        // On NE vide PAS streetNumber/street : la rue reste pré-remplie pour la porte suivante.
-        document.getElementById('details').value=''; document.getElementById('doorNumber').value=''; document.getElementById('floor').value='';
-        state.selectedInteraction = null; renderInteractions(); updateCounter();
-        document.getElementById('streetNumber').focus();
-      } catch (e) { showStatus('error', 'Erreur : ' + e.message); }
+        flushQueue(); // envoi en tâche de fond
+      } else {
+        showStatus('success', '📥 Hors-ligne : porte sauvegardée, envoi dès le retour du réseau.');
+      }
+    }
+
+    // 🧹 Vide la porte + les détails, mais GARDE le n° de rue, la rue ET l'étage
+    // (on monte les étages dans le même immeuble → seul le n° de porte change).
+    function clearFormKeepStreet() {
+      document.getElementById('doorNumber').value = '';
+      document.getElementById('details').value = '';
+      state.selectedInteraction = null;
+      renderInteractions();
+      document.getElementById('doorNumber').focus(); // on enchaîne direct au clavier
     }
 
     async function loadCompil() {
@@ -893,6 +1007,9 @@
         if (!r.ok) throw new Error(d.error || 'Erreur');
         await loadCompil();
         await updateCounter();
+        // Purge locale de la file de CET appareil (les autres appareils se videront seuls
+        // au prochain export vide).
+        writeQueue([]);
         showStatus('success', '✅ Toutes les données ont été supprimées.');
       } catch (e) { showStatus('error', 'Erreur : ' + e.message); }
     }
