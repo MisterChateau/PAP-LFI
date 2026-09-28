@@ -402,7 +402,7 @@
       <div id="sub-saisie">
         <div class="card">
           <div class="sync-badge ok" id="syncBadge"></div>
-          <div class="big-counter" id="counter"></div>
+          <div class="big-counter" id="counter" onclick="refreshServerTotal()" title="Toucher pour actualiser"></div>
           <div class="progress"><div class="fill" id="progressFill"></div></div>
           <hr style="border:none;border-top:1px solid var(--lfi-border);margin:18px 0">
           <div class="status" id="status"></div>
@@ -656,6 +656,7 @@
     function writeQueue(q) {
       try { localStorage.setItem(queueKey(), JSON.stringify(q)); } catch (e) {}
       updateSyncBadge();
+      renderCounter(); // incrément VISIBLE immédiat (y compris hors-ligne)
     }
     function enqueueDoor(payload) {
       const q = readQueue();
@@ -669,6 +670,7 @@
       if (flushing || !state.actionId) return;
       if (readQueue().length === 0) { updateSyncBadge(); return; }
       flushing = true; updateSyncBadge();
+      let anySent = false; // une porte au moins est passée côté serveur pendant ce flush ?
       // On relit la file à chaque itération : de nouvelles portes peuvent s'ajouter pendant l'envoi.
       for (let guard = 0; guard < 200; guard++) {
         const q = readQueue();
@@ -683,6 +685,7 @@
             // 2xx = enregistré ; 4xx = définitif (clé invalide, données rejetées) → on retire.
             // 429 (trop d'écritures) est un 4xx mais TEMPORAIRE → on garde pour réessayer.
             if (r.status === 429) { await bumpTries(item); break; }
+            if (r.ok) anySent = true;
             removeFromQueue(item.id);
           } else {
             // 5xx : erreur serveur passagère → on garde, on retentera.
@@ -694,6 +697,10 @@
         }
       }
       flushing = false; updateSyncBadge();
+      // Le compteur est « optimiste » (serveur + file locale) donc il se corrige
+      // déjà tout seul ; on recharge aussi le total serveur pour le re-synchroniser
+      // après une vraie réussite d'envoi (et pas à chaque tick du filet 15 s).
+      if (anySent) refreshServerTotal();
     }
 
     async function bumpTries(item) {
@@ -730,7 +737,7 @@
     setInterval(() => { flushQueue(); }, 15000);
 
     let state = {
-      actionId: null, cipherKey: '', actionName: '', selectedInteraction: null
+      actionId: null, cipherKey: '', actionName: '', selectedInteraction: null, serverTotal: 0
     };
 
     // Encodage HTML (anti-XSS) pour tout affichage via innerHTML
@@ -843,14 +850,34 @@
         const r = await fetchExport();
         if (r.ok) {
           const d = await r.json();
-          document.getElementById('counter').innerHTML =
-            `<div class="nums"><span>${d.total}</span></div>` +
-            `<div class="label">portes enregistrées</div>`;
-          const pct = Math.min(100, Math.round((d.total / PROGRESS_TARGET) * 100));
-          document.getElementById('progressFill').style.width = pct + '%';
-          if (d.total === 0) document.getElementById('progressFill').style.width = '0%';
+          state.serverTotal = d.total || 0;
+          renderCounter();
         }
+      } catch(e) { renderCounter(); }
+    }
+
+    // Recharge seulement le total serveur (plus léger, sans re-rendre la liste).
+    async function refreshServerTotal() {
+      if (!state.actionId || !state.cipherKey) return;
+      try {
+        const r = await fetchExport();
+        if (r.ok) { const d = await r.json(); state.serverTotal = d.total || 0; renderCounter(); }
       } catch(e) {}
+    }
+
+    // ⚡ Compteur OPTIMISTE : total confirmé serveur + portes encore en file locale.
+    // Motif : un militant qui vient de saisir DOIT voir le compteur s'incrémenter
+    // immédiatement, même hors-ligne (sinon il croit que sa saisie est perdue).
+    function renderCounter() {
+      const el = document.getElementById('counter');
+      if (!el || !state.actionId) return;
+      const pending = readQueue().length;
+      const total = (state.serverTotal || 0) + pending;
+      el.innerHTML =
+        `<div class="nums"><span>${total}</span></div>` +
+        `<div class="label">portes enregistrées${pending > 0 ? ' · ' + pending + ' en attente' : ''}</div>`;
+      const pct = Math.min(100, Math.round((total / PROGRESS_TARGET) * 100));
+      document.getElementById('progressFill').style.width = (total === 0 ? 0 : pct) + '%';
     }
 
     // 📍 Aide facultative : remplissage de la rue depuis la position GPS (indoor OK : on vise la rue).
