@@ -18,7 +18,7 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const supabase = require('./db');
 const { encrypt, decrypt, hashSecret, safeEqual, sealMasterKey, unsealMasterKey } = require('./crypto');
-const { createToken, decodeToken } = require('./link');
+const { createToken, decodeToken, generateShortCode, DEFAULT_EXPIRES_DAYS } = require('./link');
 
 const app = express();
 app.use(express.json({ limit: '1mb' }));
@@ -171,18 +171,60 @@ app.get('/a/:token', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
 });
 
+// Route SPA : /g/:token — lien GA (groupe d'action). Même app, mode résultats.
+app.get('/g/:token', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
+});
+
 /**
  * GET /api/link/:token
- * Décode un lien opaque → { actionId, key, role }.
- * Les infos ne sont PAS dans l'URL ; le front les reçoit en JSON et les garde en mémoire.
- * role = 'participant' (saisie) ou 'animator' (résultats détail).
+ * Résout un lien → { actionId, key, role }.
+ * Accepte DEUX formats :
+ *   • code court (ex. « A7x9K2pQrT ») → lookup dans la table short_links.
+ *   • token opaque long (rétro-compat) → decodeToken().
+ * role = 'participant' (saisie) | 'animator' | 'ga' (résultats).
+ * 🔑 Pour un code PARTICIPANT, on renvoie la clé maître (déscellée) : le front en a
+ * besoin pour chiffrer les portes. Pour animateur/GA, key = null (le serveur déchiffre).
  */
-app.get('/api/link/:token', (req, res) => {
-  const decoded = decodeToken(req.params.token);
-  if (!decoded) {
-    return res.status(400).json({ error: 'Lien invalide ou expiré.' });
+app.get('/api/link/:token', async (req, res) => {
+  const raw = req.params.token;
+  try {
+    // 1) Code court ? (que des caractères base62, longueur raisonnable)
+    if (/^[A-Za-z0-9_-]{6,14}$/.test(raw)) {
+      const { data: link, error } = await supabase
+        .from('short_links')
+        .select('code, action_id, role, expires_at')
+        .eq('code', raw)
+        .maybeSingle();
+      if (error) throw error;
+      if (!link) return res.status(400).json({ error: 'Lien invalide ou expiré.' });
+      if (link.expires_at && Date.now() > new Date(link.expires_at).getTime()) {
+        return res.status(400).json({ error: 'Lien expiré.' });
+      }
+      // Récupérer la clé scellée (nécessaire pour le participant ; utile aussi au serveur)
+      let key = null;
+      if (link.role === 'participant') {
+        const { data: act } = await supabase
+          .from('actions')
+          .select('master_key_encrypted')
+          .eq('id', link.action_id)
+          .maybeSingle();
+        key = act && act.master_key_encrypted ? unsealMasterKey(act.master_key_encrypted) : null;
+        if (!key) return res.status(409).json({ error: 'Ancienne action : utilisez le lien complet.' });
+      }
+      return res.json({ actionId: link.action_id, key, role: link.role || 'participant' });
+    }
+
+    // 2) Token opaque long (rétro-compat)
+    const decoded = decodeToken(raw);
+    if (!decoded) {
+      return res.status(400).json({ error: 'Lien invalide ou expiré.' });
+    }
+    return res.json(decoded);
+  } catch (e) {
+    console.error('Erreur résolution lien:', e.message);
+    res.status(500).json({ error: 'Erreur serveur lors de la résolution du lien.' });
   }
-  res.json(decoded);
 });
 
 // Helper : valider un UUID
@@ -232,15 +274,41 @@ app.post('/api/actions', createLimiter, async (req, res) => {
 
     if (error) throw error;
 
+    // 🔗 Liens COURTS : on crée un code court unique par rôle (participant/animateur/ga).
+    // Les tokens opaques longs restent générés pour rétro-compat, mais on privilégie
+    // les codes courts côté UI/partage (ils ne se tronquent pas dans Telegram/SMS).
+    const short = {};
+    try {
+      const expiresAt = new Date(Date.now() + DEFAULT_EXPIRES_DAYS * 24 * 60 * 60 * 1000).toISOString();
+      for (const role of ['participant', 'animator', 'ga']) {
+        let code, inserted = false;
+        for (let attempt = 0; attempt < 5 && !inserted; attempt++) {
+          code = generateShortCode();
+          const { error: eSh } = await supabase.from('short_links').insert({ code, action_id: data.id, role, expires_at: expiresAt });
+          if (!eSh) inserted = true;
+          // si collision (PK), on retente avec un nouveau code
+        }
+        if (inserted) short[role] = code;
+      }
+    } catch (e) {
+      // Si la table short_links n'existe pas encore (migration non passée), on continue
+      // avec les tokens longs : le service reste fonctionnel.
+      console.warn('short_links indisponible (migration 003 non passée ?):', e.message);
+    }
+
     res.status(201).json({
       id: data.id,
       name: cleanName, // renvoyé en clair au créateur (il a la clé dans le token)
-      token: createToken(data.id, masterKey),                    // lien PARTICIPANTS
+      token: createToken(data.id, masterKey),                    // lien PARTICIPANTS (long, rétro-compat)
       // 🔒 Lien ANIMATEUR : jeton d'accès SANS clé (le serveur déchiffre pour lui).
       animatorToken: createToken(data.id, null, undefined, 'animator'),
       // 🔑 Lien GA (groupe d'action) : même jeton que l'animateur, mais destiné
       // à la coordination. Il voit la vue agrégée et le détail (comme l'animateur).
       gaToken: createToken(data.id, null, undefined, 'ga'),
+      // 🔗 Codes courts (à privilégier pour le partage) : /r/<code>, /a/<code>, /g/<code>
+      shortCode: short.participant || null,
+      animatorShortCode: short.animator || null,
+      gaShortCode: short.ga || null,
       message: 'Action créée. Partagez le lien participants aux équipes, gardez le lien résultats pour l\'animateur.'
     });
   } catch (e) {

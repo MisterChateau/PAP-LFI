@@ -802,8 +802,9 @@
         const d = await r.json();
         if (!r.ok) throw new Error(d.error || 'Erreur');
         const base = window.location.origin;
-        const link = `${base}/r/${d.token}`;
-        const animLink = d.animatorToken ? `${base}/a/${d.animatorToken}` : null;
+        // 🔗 On privilégie les CODES COURTS (non tronqués dans Telegram/SMS).
+        const link = d.shortCode ? `${base}/r/${d.shortCode}` : `${base}/r/${d.token}`;
+        const animLink = d.animatorShortCode ? `${base}/a/${d.animatorShortCode}` : (d.animatorToken ? `${base}/a/${d.animatorToken}` : null);
         resEl.innerHTML = `
           <div class="status success">✅ Action créée !</div>
           <p style="font-size:.9rem;font-weight:600;margin-bottom:6px">📋 Lien PARTICIPANTS (à partager à l'équipe) :</p>

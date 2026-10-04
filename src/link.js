@@ -18,6 +18,23 @@ const crypto = require('crypto');
 // Durée de validité par défaut d'un lien de campagne (30 jours)
 const DEFAULT_EXPIRES_DAYS = 30;
 
+// 🔗 Liens COURTS : longueur du code (base62). 10 car ≈ 59 bits d'entropie
+// → non devinable par force brute, mais copiable sans troncature (Telegram/SMS).
+const SHORT_CODE_LEN = 10;
+const CODE_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+
+/**
+ * Génère un code court aléatoire URL-safe (base62).
+ * @param {number} [len]
+ * @returns {string}
+ */
+function generateShortCode(len = SHORT_CODE_LEN) {
+  const bytes = crypto.randomBytes(len);
+  let out = '';
+  for (let i = 0; i < len; i++) out += CODE_ALPHABET[bytes[i] % CODE_ALPHABET.length];
+  return out;
+}
+
 // Le secret serveur doit être défini dans l'environnement (APP_SECRET)
 function getSecret() {
   const secret = process.env.APP_SECRET;
@@ -78,4 +95,4 @@ function decodeToken(token) {
   }
 }
 
-module.exports = { createToken, decodeToken, DEFAULT_EXPIRES_DAYS };
+module.exports = { createToken, decodeToken, DEFAULT_EXPIRES_DAYS, generateShortCode, SHORT_CODE_LEN };

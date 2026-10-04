@@ -12,7 +12,7 @@ process.env.SUPABASE_URL = 'http://mock.local';
 process.env.SUPABASE_ANON_KEY = 'mock';
 
 // --- Mock Supabase minimal en mémoire ---
-const store = { actions: [], doors: [] };
+const store = { actions: [], doors: [], short_links: [] };
 let idc = 0;
 const uuid = () => `00000000-0000-4000-8000-${String(++idc).padStart(12, '0')}`;
 
@@ -90,6 +90,15 @@ const server = app.listen(3999, async () => {
   ok('lien participant → role=participant + clé', lPart.json.role === 'participant' && !!lPart.json.key);
   ok('lien animateur → role=animator + sans clé', lAnim.json.role === 'animator' && lAnim.json.key === null);
   ok('lien GA → role=ga + sans clé', lGa.json.role === 'ga' && lGa.json.key === null);
+
+  // 2bis. 🔗 Codes COURTS
+  ok('réponse contient shortCode (participant)', /^[A-Za-z0-9]{6,14}$/.test(create.json.shortCode || ''));
+  ok('réponse contient animatorShortCode', /^[A-Za-z0-9]{6,14}$/.test(create.json.animatorShortCode || ''));
+  const lShortPart = await req('GET', `/api/link/${create.json.shortCode}`);
+  const lShortAnim = await req('GET', `/api/link/${create.json.animatorShortCode}`);
+  ok('code court participant → role=participant + clé', lShortPart.json.role === 'participant' && !!lShortPart.json.key);
+  ok('code court animateur → role=animator + sans clé', lShortAnim.json.role === 'animator' && lShortAnim.json.key === null);
+  ok('code court inconnu → 400', (await req('GET', '/api/link/ZZZZZZZZZZ')).status === 400);
 
   // 3. Enregistrer une porte (avec la clé participant)
   const masterKey = lPart.json.key;
