@@ -606,16 +606,23 @@ app.post('/api/actions/:id/purge', async (req, res) => {
 });
 
 // --- Démarrage ---
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`✅ PAP-LFI démarré sur http://localhost:${PORT}`);
-  // Purge au démarrage + quotidienne (conformité RGPD, pas besoin de cron externe)
-  purgeExpiredActions()
-    .then(n => n > 0 && console.log(`🧹 Purge RGPD : ${n} action(s) expirée(s) supprimée(s).`))
-    .catch(e => console.error('Erreur purge démarrage:', e.message));
-  setInterval(() => {
+// `require.main === module` : on ne démarre le serveur que si le fichier est
+// lancé directement (node src/server.js). Cela permet aux tests d'importer `app`
+// sans ouvrir de port.
+if (require.main === module) {
+  const PORT = process.env.PORT || 3000;
+  app.listen(PORT, () => {
+    console.log(`✅ PAP-LFI démarré sur http://localhost:${PORT}`);
+    // Purge au démarrage + quotidienne (conformité RGPD, pas besoin de cron externe)
     purgeExpiredActions()
       .then(n => n > 0 && console.log(`🧹 Purge RGPD : ${n} action(s) expirée(s) supprimée(s).`))
-      .catch(e => console.error('Erreur purge périodique:', e.message));
-  }, 24 * 60 * 60 * 1000); // tous les jours
-});
+      .catch(e => console.error('Erreur purge démarrage:', e.message));
+    setInterval(() => {
+      purgeExpiredActions()
+        .then(n => n > 0 && console.log(`🧹 Purge RGPD : ${n} action(s) expirée(s) supprimée(s).`))
+        .catch(e => console.error('Erreur purge périodique:', e.message));
+    }, 24 * 60 * 60 * 1000); // tous les jours
+  });
+}
+
+module.exports = app;
