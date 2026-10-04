@@ -23,3 +23,7 @@ create table if not exists public.short_links (
 
 create index if not exists idx_short_links_action on public.short_links(action_id);
 create index if not exists idx_short_links_expires on public.short_links(expires_at);
+
+-- 🔒 Sécurité : RLS activée SANS aucune policy → accès réservé au service_role
+-- (le serveur), comme pour actions/doors. L'anon/authenticated ne peut rien lire.
+alter table public.short_links enable row level security;
