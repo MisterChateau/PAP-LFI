@@ -646,10 +646,14 @@
 
   <div class="footer-note">
     <span class="lock">🔒 Données chiffrées de bout en bout</span><br>
-    PAP-LFI — La France Insoumise
+    PAP-LFI — La France Insoumise<br>
+    <span id="appVersion" style="font-size:.66rem;opacity:.6"></span>
   </div>
 
   <script>
+    // 🔖 Version du front (affichée discrètement) — permet de vérifier d'un coup d'œil
+    // que le téléphone a bien rechargé la dernière version après un déploiement.
+    const APP_VERSION = '2026-10-04.1';
     const INTERACTIONS = [
       { id: 'pas-reponse', label: '📬 Pas de réponse' },
       { id: 'sympa', label: '😊 Sympathique' },
@@ -1185,7 +1189,9 @@
     function hideStatus() { const el=document.getElementById('status'); el.className='status'; el.textContent=''; }
 
     (function init() {
-      // 📎 Liens opaques : /r/<token> (participant), /a/<token> (animateur), /g/<token> (GA).
+      const vEl = document.getElementById('appVersion');
+      if (vEl) vEl.textContent = 'version ' + APP_VERSION;
+      // 📎 Liens courts : /r/<code> (participant), /a/<code> (animateur), /g/<code> (GA).
       // Le rôle est ensuite déterminé par /api/link/:token, mais on accepte les 3 préfixes.
       const pathMatch = window.location.pathname.match(/^\/(?:r|a|g)\/([^/]+)$/);
       if (pathMatch) openToken(decodeURIComponent(pathMatch[1]));
@@ -1252,9 +1258,23 @@
     setTimeout(maybeShowPwa, 4000);
 
     // Enregistrement du service worker (indispensable pour que l'install soit proposée).
+    // 🔄 Si une nouvelle version est détectée, on l'active immédiatement et on
+    // recharge une fois — pour que le téléphone reprenne toujours le code à jour
+    // sans que le militant ait à réinstaller la PWA.
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js').catch(() => {});
+        navigator.serviceWorker.register('/sw.js').then((reg) => {
+          reg.addEventListener('updatefound', () => {
+            const nw = reg.installing;
+            if (!nw) return;
+            nw.addEventListener('statechange', () => {
+              if (nw.state === 'activated' && navigator.serviceWorker.controller) {
+                // Une nouvelle version vient d'être activée → on recharge une fois.
+                location.reload();
+              }
+            });
+          });
+        }).catch(() => {});
       });
     }
   </script>

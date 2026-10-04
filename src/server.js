@@ -152,6 +152,13 @@ app.use(express.static(path.join(__dirname, '..', 'public'), {
     if (filePath.endsWith('.webmanifest')) {
       res.set('Content-Type', 'application/manifest+json; charset=utf-8');
     }
+    // 🚫 Jamais de cache HTTP pour le HTML et le service worker : ils doivent
+    // toujours être revalidés, sinon un téléphone peut rester bloqué sur une
+    // ancienne version (et appeler d'anciens services). Les assets (icônes) peuvent
+    // être cachés normalement.
+    if (filePath.endsWith('.html') || filePath.endsWith('sw.js')) {
+      res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+    }
   }
 }));
 

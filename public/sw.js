@@ -1,8 +1,12 @@
 /* Service worker PAP-LFI — mise en cache minimale pour l'installation PWA.
    ⚠️ Règle d'or : ne JAMAIS mettre en cache les appels /api/* (données chiffrées
-   et résultats en temps réel). On ne cache que la coquille de l'app. */
+   et résultats en temps réel). On ne cache que la coquille de l'app.
 
-const CACHE = 'pap-lfi-v1';
+   🔄 Bumper CACHE_VERSION à chaque mise à jour du front : l'ancien cache est
+   supprimé à l'activation, ce qui force les téléphones à reprendre le code neuf. */
+
+const CACHE_VERSION = 'v2026-10-04';   // ⬅️ incrémenter à chaque livraison de front
+const CACHE = 'pap-lfi-' + CACHE_VERSION;
 const SHELL = [
   '/',
   '/manifest.webmanifest',
