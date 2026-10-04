@@ -39,9 +39,10 @@ app.use(helmet({
       scriptSrcAttr: ["'unsafe-inline'"],
       styleSrc: ["'self'", "'unsafe-inline'"],
       imgSrc: ["'self'", "data:"],
-      // Nominatim (OpenStreetMap) : aide optionnelle au remplissage de l'adresse via GPS.
-      // On n'autorise QUE ce domaine, et aucune donnée d'identité n'est transmise.
-      connectSrc: ["'self'", "https://nominatim.openstreetmap.org"],
+      // 🇫🇷 BAN (Base Adresse Nationale, api-adresse.data.gouv.fr) : reverse-geocoding
+      // officiel français, gratuit et sans clé. Remplace Nominatim (qui bloque les
+      // appels navigateur pour cause d'User-Agent non conforme).
+      connectSrc: ["'self'", "https://api-adresse.data.gouv.fr"],
       objectSrc: ["'none'"],
       frameAncestors: ["'none'"]
     }

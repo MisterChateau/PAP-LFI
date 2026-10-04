@@ -935,7 +935,8 @@
     }
 
     // 📍 Aide facultative : remplissage de la rue depuis la position GPS (indoor OK : on vise la rue).
-    // Reverse-geocoding via Nominatim (OpenStreetMap). Aucune coordonnée n'est stockée :
+    // Reverse-geocoding via la BAN (Base Adresse Nationale, api-adresse.data.gouv.fr) :
+    // service officiel français, gratuit et sans clé. Aucune coordonnée n'est stockée :
     // seul le texte corrigé par le militant est enregistré. Jamais bloquant : si ça échoue,
     // la saisie manuelle reste pleinement disponible.
     async function fillFromGPS() {
@@ -950,8 +951,8 @@
       navigator.geolocation.getCurrentPosition(async (pos) => {
         try {
           const { latitude: lat, longitude: lon } = pos.coords;
-          const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}&addressdetails=1&accept-language=fr`;
-          // Timeout court : Nominatim est un service tiers, optionnel → ne jamais faire attendre longtemps.
+          const url = `https://api-adresse.data.gouv.fr/reverse/?lat=${lat}&lon=${lon}`;
+          // Timeout court : service tiers optionnel → ne jamais faire attendre longtemps.
           const ctrl = new AbortController();
           const t = setTimeout(() => ctrl.abort(), 6000);
           let d;
@@ -959,10 +960,11 @@
             const r = await fetch(url, { headers: { 'Accept': 'application/json' }, signal: ctrl.signal });
             d = await r.json();
           } finally { clearTimeout(t); }
-          const a = d.address || {};
-          const num = a.house_number || '';
-          const street = a.road || a.pedestrian || a.footway || a.path || '';
-          const city = a.city || a.town || a.village || a.municipality || '';
+          const f = (d.features || [])[0];
+          const p = (f && f.properties) || {};
+          const num = p.housenumber || '';
+          const street = p.street || p.name || '';
+          const city = p.city || '';
           if (!street) return fail('Rue introuvable au point GPS. Saisissez-la à la main.');
           streetEl.value = city ? `${street} (${city})` : street;
           if (num) numEl.value = num;
