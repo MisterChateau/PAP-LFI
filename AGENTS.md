@@ -27,7 +27,10 @@ PAP-LFI/
 
 ## 🗄️ Modèle de données (Supabase)
 
-**`actions`** (campagnes) : `id` (uuid), `name` (chiffré), `master_key_hash`, `created_at`
+**`actions`** (campagnes) : `id` (uuid), `name` (chiffré), `master_key_hash`, `animator_key_hash`, `created_at`
+- `master_key_hash` = clé **PARTICIPANT** (chiffre les données + accès à la saisie).
+- `animator_key_hash` = clé **ANIMATEUR** (déverrouille la vue détail/export ; `NULL` = action créée avant la migration 001 → rétro-compat, clé maître = contrôle total).
+- **Migration** : `migrations/001_add_animator_key.sql` (non destructive).
 
 **`doors`** (portes visitées) : `id`, `action_id`, `team`, `building`, `floor`,
 `door_number`, `interaction`, `details`, `created_at`

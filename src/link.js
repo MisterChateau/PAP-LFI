@@ -30,15 +30,16 @@ function getSecret() {
 /**
  * Encode un { actionId, key } en token opaque avec expiration.
  * @param {string} actionId - UUID de l'action
- * @param {string} key - clé de chiffrement des données
+ * @param {string} key - clé de chiffrement des données (null pour un token animateur)
  * @param {number} [expiresInDays] - durée de validité en jours (défaut 30)
+ * @param {string} [role] - 'participant' (défaut), 'animator' ou 'ga'
  * @returns {string} token opaque URL-safe
  */
-function createToken(actionId, key, expiresInDays = DEFAULT_EXPIRES_DAYS) {
+function createToken(actionId, key, expiresInDays = DEFAULT_EXPIRES_DAYS, role = 'participant') {
   const now = Date.now();
   // Pas d'expiration si expiresInDays <= 0 (choix explicite du créateur)
   const exp = expiresInDays > 0 ? now + expiresInDays * 24 * 60 * 60 * 1000 : null;
-  const payload = JSON.stringify({ actionId, key, exp });
+  const payload = JSON.stringify({ actionId, key, exp, role });
   const iv = crypto.randomBytes(12);
   const cipher = crypto.createCipheriv('aes-256-gcm', getSecret(), iv);
   const encrypted = Buffer.concat([cipher.update(payload, 'utf8'), cipher.final()]);
@@ -51,9 +52,9 @@ function createToken(actionId, key, expiresInDays = DEFAULT_EXPIRES_DAYS) {
 }
 
 /**
- * Décode un token opaque. Renvoie { actionId, key } ou null si invalide/expiré.
+ * Décode un token opaque. Renvoie { actionId, key, role } ou null si invalide/expiré.
  * @param {string} token
- * @returns {{actionId: string, key: string}|null}
+ * @returns {{actionId: string, key: string|null, role: string}|null}
  */
 function decodeToken(token) {
   try {
@@ -64,10 +65,14 @@ function decodeToken(token) {
     decipher.setAuthTag(Buffer.from(tagB64, 'base64url'));
     const decrypted = Buffer.concat([decipher.update(Buffer.from(dataB64, 'base64url')), decipher.final()]);
     const parsed = JSON.parse(decrypted.toString('utf8'));
-    if (!parsed.actionId || !parsed.key) return null;
+    if (!parsed.actionId) return null;
     // 🔒 Expiration : refuser les liens dont la date est dépassée
     if (parsed.exp && Date.now() > parsed.exp) return null;
-    return { actionId: parsed.actionId, key: parsed.key };
+    // Un token participant DOIT porter une clé ; les tokens animateur/GA n'en portent pas
+    // (le serveur déchiffre pour eux à partir de la copie scellée de la clé maître).
+    const role = ['animator', 'ga'].includes(parsed.role) ? parsed.role : 'participant';
+    if (role === 'participant' && !parsed.key) return null;
+    return { actionId: parsed.actionId, key: parsed.key || null, role };
   } catch (e) {
     return null; // token invalide / falsifié / mauvais secret / expiré
   }

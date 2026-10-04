@@ -29,6 +29,7 @@ Aujourd'hui, le porte-à-porte se fait sur **papier** : chaque équipe note éta
 ## Sécurité
 - **Chiffrement de bout en bout** : les données sont chiffrées (AES-256-GCM, clé dérivée PBKDF2) avant stockage dans la BDD
 - **Clé maître créateur** : seule clé capable de déchiffrer toutes les données
+- **Rôle animateur / GA** : une **clé animateur** dédiée (`animator_key_hash`) et un **lien dédié** (`/a/…` animateur, `/g/…` GA) déverrouillent la vue détail/export ; les participants ne voient que la saisie et les agrégats. Le serveur déchiffre pour les animateurs via la **clé maître scellée** (`master_key_encrypted`, chiffrée avec `APP_SECRET`) : l'animateur n'a jamais la clé maître. Migrations : `migrations/001_add_animator_key.sql` puis `002_master_key_encrypted.sql`.
 - **Codes d'équipe** : hashés (SHA-256), jamais stockés en clair
 - **Même si la base Supabase est compromise, rien n'est exploitable** sans la clé maître
 
@@ -53,6 +54,7 @@ npm start   # ou : npm run dev
 ## Configuration Supabase
 1. Créez un projet sur [supabase.com](https://supabase.com) (gratuit)
 2. Dans le **SQL Editor**, exécutez le contenu de `supabase_schema.sql`
+   - Base existante ? Exécutez aussi les migrations de `migrations/` dans l'ordre (ex. `001_add_animator_key.sql`, `002_master_key_encrypted.sql`)
 3. Récupérez dans **Settings → API** : l'URL et la clé `service_role`
 4. Configurez ces valeurs en variables d'environnement (`SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`)
 

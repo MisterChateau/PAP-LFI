@@ -103,4 +103,50 @@ function safeEqual(a, b) {
   return crypto.timingSafeEqual(ba, bb);
 }
 
-module.exports = { encrypt, decrypt, deriveKey, hashSecret, safeEqual };
+/**
+ * Chiffre la clé maître avec le secret SERVEUR (APP_SECRET).
+ *
+ * But : permettre au serveur de retrouver la clé maître pour déchiffrer les
+ * données d'une action au nom d'un ANIMATEUR légitime (qui ne connaît PAS la
+ * clé maître), sans jamais stocker cette clé en clair en BDD.
+ *
+ * ⚠️ Si APP_SECRET change, toutes les clés maîtres scellées deviennent
+ * indéchiffrables → l'export détaillé par un animateur cesse de fonctionner
+ * (rétro-compat : la clé maître du lien créateur reste elle-même valable,
+ * puisqu'elle n'est pas scellée mais fournie par le client).
+ *
+ * @param {string} masterKey - la clé maître en clair (hex)
+ * @returns {string} la clé maître scellée (iv:tag:ciphertext en base64)
+ */
+function sealMasterKey(masterKey) {
+  const secret = process.env.APP_SECRET;
+  if (!secret) throw new Error('APP_SECRET n\'est pas défini.');
+  const sealedKey = crypto.createHash('sha256').update('pap-lfi-seal-v1:' + secret).digest();
+  const iv = crypto.randomBytes(IV_LEN);
+  const cipher = crypto.createCipheriv(ALGO, sealedKey, iv);
+  const enc = Buffer.concat([cipher.update(String(masterKey), 'utf8'), cipher.final()]);
+  const tag = cipher.getAuthTag();
+  return [iv.toString('base64'), tag.toString('base64'), enc.toString('base64')].join(':');
+}
+
+/**
+ * Déscelle une clé maître scellée par sealMasterKey (avec APP_SECRET).
+ * @param {string} sealed - la clé maître scellée
+ * @returns {string|null} la clé maître en clair, ou null si échec
+ */
+function unsealMasterKey(sealed) {
+  try {
+    const secret = process.env.APP_SECRET;
+    if (!secret) return null;
+    const sealedKey = crypto.createHash('sha256').update('pap-lfi-seal-v1:' + secret).digest();
+    const [ivB64, tagB64, dataB64] = String(sealed).split(':');
+    const decipher = crypto.createDecipheriv(ALGO, sealedKey, Buffer.from(ivB64, 'base64'));
+    decipher.setAuthTag(Buffer.from(tagB64, 'base64'));
+    const dec = Buffer.concat([decipher.update(Buffer.from(dataB64, 'base64')), decipher.final()]);
+    return dec.toString('utf8');
+  } catch (e) {
+    return null;
+  }
+}
+
+module.exports = { encrypt, decrypt, deriveKey, hashSecret, safeEqual, sealMasterKey, unsealMasterKey };

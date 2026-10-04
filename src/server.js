@@ -17,7 +17,7 @@ const crypto = require('crypto');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const supabase = require('./db');
-const { encrypt, decrypt, hashSecret, safeEqual } = require('./crypto');
+const { encrypt, decrypt, hashSecret, safeEqual, sealMasterKey, unsealMasterKey } = require('./crypto');
 const { createToken, decodeToken } = require('./link');
 
 const app = express();
@@ -165,10 +165,17 @@ app.get('/r/:token', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
 });
 
+// Route SPA : /a/:token — lien ANIMATEUR. Même app, mais le front bascule en mode
+// « résultats détail » après validation du jeton auprès de /api/link/:token.
+app.get('/a/:token', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
+});
+
 /**
  * GET /api/link/:token
- * Décode un lien opaque → { actionId, key }.
+ * Décode un lien opaque → { actionId, key, role }.
  * Les infos ne sont PAS dans l'URL ; le front les reçoit en JSON et les garde en mémoire.
+ * role = 'participant' (saisie) ou 'animator' (résultats détail).
  */
 app.get('/api/link/:token', (req, res) => {
   const decoded = decodeToken(req.params.token);
@@ -203,12 +210,23 @@ app.post('/api/actions', createLimiter, async (req, res) => {
 
     // Générer une clé de chiffrement aléatoire forte (32 octets → hex)
     const masterKey = crypto.randomBytes(32).toString('hex');
+    // 🔑 Clé ANIMATEUR : déverrouille la vue détail/export. Ne chiffre rien
+    // (le serveur déchiffre avec la clé maître) ; sert uniquement de laissez-passer.
+    const animatorKey = crypto.randomBytes(32).toString('hex');
 
     // 🔒 Le nom d'action est CHIFFRÉ avec la clé maître : une fuite Supabase
     // ne révèle plus où/quand le parti fait du terrain.
     const { data, error } = await supabase
       .from('actions')
-      .insert({ name: encrypt(cleanName, masterKey), master_key_hash: hashSecret(masterKey) })
+      .insert({
+        name: encrypt(cleanName, masterKey),
+        master_key_hash: hashSecret(masterKey),
+        // 🔑 Copie scellée de la clé maître (chiffrée avec APP_SECRET) : permet au
+        // serveur de déchiffrer les résultats pour un ANIMATEUR légitime, sans lui
+        // transmettre la clé maître. NULL si APP_SECRET absent (rétro-compat).
+        master_key_encrypted: sealMasterKey(masterKey),
+        animator_key_hash: hashSecret(animatorKey)
+      })
       .select()
       .single();
 
@@ -217,8 +235,13 @@ app.post('/api/actions', createLimiter, async (req, res) => {
     res.status(201).json({
       id: data.id,
       name: cleanName, // renvoyé en clair au créateur (il a la clé dans le token)
-      token: createToken(data.id, masterKey),
-      message: 'Action créée. Partagez ce lien aux équipes.'
+      token: createToken(data.id, masterKey),                    // lien PARTICIPANTS
+      // 🔒 Lien ANIMATEUR : jeton d'accès SANS clé (le serveur déchiffre pour lui).
+      animatorToken: createToken(data.id, null, undefined, 'animator'),
+      // 🔑 Lien GA (groupe d'action) : même jeton que l'animateur, mais destiné
+      // à la coordination. Il voit la vue agrégée et le détail (comme l'animateur).
+      gaToken: createToken(data.id, null, undefined, 'ga'),
+      message: 'Action créée. Partagez le lien participants aux équipes, gardez le lien résultats pour l\'animateur.'
     });
   } catch (e) {
     console.error('Erreur création action:', e.message);
@@ -271,9 +294,8 @@ app.post('/api/actions/:id/doors', async (req, res) => {
     if (!sBuilding) {
       return res.status(400).json({ error: 'Le numéro et la rue sont obligatoires.' });
     }
-    if (!sFloor && !sDoor) {
-      return res.status(400).json({ error: 'Précisez au moins l\'étage ou le numéro de porte.' });
-    }
+    // Étage et n° de porte sont désormais OPTIONNELS (terrain : maisons individuelles,
+    // portes d'entrée simples...). La porte reste exploitable via n° de rue + rue + heure.
 
     const { error } = await supabase.from('doors').insert({
       action_id: actionId,
@@ -305,7 +327,16 @@ app.post('/api/actions/:id/doors', async (req, res) => {
  * PLUS JAMAIS dans l'URL (?masterKey=...). Elle ne se retrouve donc ni dans
  * les logs d'accès Render, ni dans l'historique du navigateur, ni dans un
  * proxy intermédiaire.
- * Body : { masterKey: string }
+ * Body : { masterKey?: string, animatorKey?: string, token?: string }
+ *
+ * 3 modes d'autorisation :
+ *   1. `masterKey` (créateur) → déchiffre directement ; OK pour tout.
+ *   2. `animatorKey` (rôle animateur, actions ≥ migration 001).
+ *   3. `token` (lien animateur/GA) → le SERVEUR déchiffre via la copie scellée
+ *      de la clé maître (`master_key_encrypted`, migration 002).
+ *
+ * Rétro-compat : les actions créées AVANT la migration 002 (master_key_encrypted
+ * = NULL) ne peuvent être déchiffrées que via la clé maître (mode 1).
  */
 app.post('/api/actions/:id/export', async (req, res) => {
   try {
@@ -313,10 +344,27 @@ app.post('/api/actions/:id/export', async (req, res) => {
     if (!isValidUUID(actionId)) {
       return res.status(400).json({ error: 'Identifiant d\'action invalide.' });
     }
-    const { masterKey } = req.body || {};
+    const { masterKey, animatorKey, token } = req.body || {};
+    const providedKey = animatorKey || masterKey;
 
-    if (!masterKey) {
-      return res.status(400).json({ error: 'La clé maître est requise pour consulter les données.' });
+    // Cas 3 : jeton (lien animateur / GA) → accès aux résultats SANS clé.
+    let roleFromToken = null;
+    let tokenActionId = null;
+    if (token) {
+      const decoded = decodeToken(token);
+      if (!decoded) {
+        return res.status(401).json({ error: 'Lien invalide ou expiré.' });
+      }
+      roleFromToken = decoded.role;
+      tokenActionId = decoded.actionId;
+      // Le jeton doit porter sur CETTE action (pas de rejeu sur une autre).
+      if (tokenActionId !== actionId) {
+        return res.status(403).json({ error: 'Ce lien ne concerne pas cette action.' });
+      }
+    }
+
+    if (!providedKey && !token) {
+      return res.status(400).json({ error: 'Clé ou lien requis pour consulter les données.' });
     }
 
     const { data: action, error: errAction } = await supabase
@@ -330,9 +378,43 @@ app.post('/api/actions/:id/export', async (req, res) => {
       return res.status(404).json({ error: 'Action introuvable.' });
     }
 
-    // Vérifier la clé maître (comparaison à temps constant)
-    if (!safeEqual(hashSecret(masterKey), action.master_key_hash)) {
-      return res.status(403).json({ error: 'Clé maître incorrecte.' });
+    // --- Détermination du mode d'accès ---
+    let decryptKey = null; // clé maître utilisée pour déchiffrer
+
+    if (token) {
+      // Accès par lien animateur/GA : déchiffrement serveur via la clé scellée.
+      if (roleFromToken === 'participant') {
+        return res.status(403).json({ error: 'Ce lien ne donne pas accès aux résultats détaillés.' });
+      }
+      if (!action.master_key_encrypted) {
+        return res.status(403).json({ error: 'Résultats indisponibles par lien pour cette action (ancienne action : utilisez la clé ma\u00eetre).' });
+      }
+      decryptKey = unsealMasterKey(action.master_key_encrypted);
+      if (!decryptKey) {
+        return res.status(500).json({ error: 'Déchiffrement impossible (clé scellée illisible).' });
+      }
+    } else {
+      // Accès par clé (créateur) ou clé animateur (actions ≥ migration 001).
+      const okAnimator = action.animator_key_hash
+        ? safeEqual(hashSecret(providedKey), action.animator_key_hash)
+        : false;
+      const okMaster = safeEqual(hashSecret(providedKey), action.master_key_hash);
+      if (!okAnimator && !okMaster) {
+        return res.status(403).json({ error: 'Clé animateur incorrecte.' });
+      }
+      if (!okMaster) {
+        // Clé animateur valide mais pas la clé maître → déchiffrement serveur
+        // possible seulement si la clé maître a été scellée (migration 002).
+        if (!action.master_key_encrypted) {
+          return res.status(403).json({ error: 'Le détail nécessite la clé maître (embarquée dans le lien créateur).' });
+        }
+        decryptKey = unsealMasterKey(action.master_key_encrypted);
+        if (!decryptKey) {
+          return res.status(500).json({ error: 'Déchiffrement impossible (clé scellée illisible).' });
+        }
+      } else {
+        decryptKey = providedKey; // clé maître → déchiffre directement
+      }
     }
 
     // Récupérer toutes les portes
@@ -347,23 +429,107 @@ app.post('/api/actions/:id/export', async (req, res) => {
     // Déchiffrer avec la clé maître
     const decrypted = (doors || []).map((d) => ({
       id: d.id,
-      team: d.team ? decrypt(d.team, masterKey) : null,
-      building: d.building ? decrypt(d.building, masterKey) : null,
-      floor: d.floor ? decrypt(d.floor, masterKey) : null,
-      doorNumber: d.door_number ? decrypt(d.door_number, masterKey) : null,
-      interaction: d.interaction ? decrypt(d.interaction, masterKey) : null,
-      details: d.details ? decrypt(d.details, masterKey) : null,
+      team: d.team ? decrypt(d.team, decryptKey) : null,
+      building: d.building ? decrypt(d.building, decryptKey) : null,
+      floor: d.floor ? decrypt(d.floor, decryptKey) : null,
+      doorNumber: d.door_number ? decrypt(d.door_number, decryptKey) : null,
+      interaction: d.interaction ? decrypt(d.interaction, decryptKey) : null,
+      details: d.details ? decrypt(d.details, decryptKey) : null,
       createdAt: d.created_at
     }));
 
     res.json({
-      action: { id: action.id, name: action.name ? decrypt(action.name, masterKey) : null, createdAt: action.created_at },
+      action: { id: action.id, name: action.name ? decrypt(action.name, decryptKey) : null, createdAt: action.created_at },
       total: decrypted.length,
       doors: decrypted
     });
   } catch (e) {
     console.error('Erreur export:', e.message);
     res.status(500).json({ error: 'Erreur serveur lors de l\'export.' });
+  }
+});
+
+/**
+ * POST /api/actions/:id/summary
+ * Vue AGRÉGÉE (participants) : uniquement des compteurs, jamais le détail nominatif
+ * ni les adresses. Il faut déchiffrer les interactions pour compter.
+ * Body : { masterKey?: string, token?: string }
+ *   • masterKey → déchiffre directement (créateur / participant).
+ *   • token (animateur/GA) → le serveur déchiffre via la clé scellée (migration 002).
+ * Retour : { total, sympathique, interesse, adherent, indecis, absent, refus, neSonnePas, positifs, pourcentage_positifs }
+ */
+app.post('/api/actions/:id/summary', async (req, res) => {
+  try {
+    const actionId = req.params.id;
+    if (!isValidUUID(actionId)) {
+      return res.status(400).json({ error: 'Identifiant d\'action invalide.' });
+    }
+    const { masterKey, token } = req.body || {};
+    if (!masterKey && !token) {
+      return res.status(400).json({ error: 'La clé ou un lien est requis pour consulter les statistiques.' });
+    }
+
+    const { data: action, error: errAction } = await supabase
+      .from('actions')
+      .select('id, master_key_hash, master_key_encrypted')
+      .eq('id', actionId)
+      .maybeSingle();
+    if (errAction) throw errAction;
+    if (!action) return res.status(404).json({ error: 'Action introuvable.' });
+
+    // Détermination de la clé de déchiffrement
+    let decryptKey = null;
+    if (token) {
+      const decoded = decodeToken(token);
+      if (!decoded || decoded.actionId !== actionId) {
+        return res.status(403).json({ error: 'Lien invalide pour cette action.' });
+      }
+      if (!action.master_key_encrypted) {
+        return res.status(403).json({ error: 'Stats indisponibles par lien pour cette action (ancienne action).' });
+      }
+      decryptKey = unsealMasterKey(action.master_key_encrypted);
+      if (!decryptKey) return res.status(500).json({ error: 'Déchiffrement impossible.' });
+    } else {
+      if (!safeEqual(hashSecret(masterKey), action.master_key_hash)) {
+        return res.status(403).json({ error: 'Clé incorrecte.' });
+      }
+      decryptKey = masterKey;
+    }
+
+    const { data: doors, error: errDoors } = await supabase
+      .from('doors')
+      .select('interaction')
+      .eq('action_id', actionId);
+    if (errDoors) throw errDoors;
+
+    // Comptage par type d'interaction (déchiffrement éphémère, aucun détail renvoyé)
+    const counts = {
+      sympathique: 0, interesse: 0, adherent: 0, indecis: 0,
+      absent: 0, refus: 0, neSonnePas: 0
+    };
+    for (const d of doors || []) {
+      if (!d.interaction) continue;
+      const v = decrypt(d.interaction, decryptKey) || '';
+      const s = v.toLowerCase();
+      if (s.includes('sympa')) counts.sympathique++;
+      else if (s.includes('intéress') || s.includes('interess')) counts.interesse++;
+      else if (s.includes('adhérent') || s.includes('adherent')) counts.adherent++;
+      else if (s.includes('indécis') || s.includes('indecis')) counts.indecis++;
+      else if (s.includes('pas de réponse') || s.includes('pas de reponse')) counts.absent++;
+      else if (s.includes('refus')) counts.refus++;
+      else if (s.includes('ne sonne pas')) counts.neSonnePas++;
+    }
+    const total = (doors || []).length;
+    const positifs = counts.sympathique + counts.interesse + counts.adherent + counts.indecis;
+    res.json({
+      total,
+      ...counts,
+      positifs,
+      pourcentage_positifs: total ? Math.round((positifs / total) * 100) : 0
+    });
+  } catch (e) {
+    console.error('Erreur summary:', e.message);
+    res.status(500).json({ error: 'Erreur serveur lors du calcul des stats.' });
   }
 });
 

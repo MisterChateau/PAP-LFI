@@ -737,7 +737,7 @@
     setInterval(() => { flushQueue(); }, 15000);
 
     let state = {
-      actionId: null, cipherKey: '', actionName: '', selectedInteraction: null, serverTotal: 0
+      actionId: null, cipherKey: '', actionName: '', selectedInteraction: null, serverTotal: 0, role: 'participant', token: null
     };
 
     // Encodage HTML (anti-XSS) pour tout affichage via innerHTML
@@ -783,12 +783,18 @@
         if (!r.ok) throw new Error(d.error || 'Erreur');
         const base = window.location.origin;
         const link = `${base}/r/${d.token}`;
+        const animLink = d.animatorToken ? `${base}/a/${d.animatorToken}` : null;
         resEl.innerHTML = `
           <div class="status success">✅ Action créée !</div>
-          <p style="font-size:.9rem;font-weight:600;margin-bottom:6px">Voici le lien à partager dans votre groupe :</p>
+          <p style="font-size:.9rem;font-weight:600;margin-bottom:6px">📋 Lien PARTICIPANTS (à partager à l'équipe) :</p>
           <div class="link-box">${link}</div>
-          <button class="copy-btn" onclick="copyLink('${link.replace(/'/g,"\\'")}')">📋 Copier le lien</button>
-          <p style="font-size:.8rem;color:#8a857c;margin-top:10px">Quiconque ouvre ce lien peut saisir et voir les résultats. Gardez-le dans votre boucle d'action.</p>`;
+          <button class="copy-btn" onclick="copyLink('${link.replace(/'/g,"\\'")}')">📋 Copier le lien participants</button>
+          ${animLink ? `
+          <p style="font-size:.9rem;font-weight:600;margin:14px 0 6px">🔒 Lien RÉSULTATS / ANIMATEUR (à garder pour vous) :</p>
+          <div class="link-box">${animLink}</div>
+          <button class="copy-btn" onclick="copyLink('${animLink.replace(/'/g,"\\'")}')">📋 Copier le lien animateur</button>
+          ` : ''}
+          <p style="font-size:.8rem;color:#8a857c;margin-top:10px">Le lien participants sert à saisir les portes. Le lien animateur donne accès aux résultats détaillés — ne le partagez qu'avec les responsables.</p>`;
       } catch (e) { resEl.innerHTML = `<div class="status error">Erreur : ${e.message}</div>`; }
     }
 
@@ -802,7 +808,7 @@
         const r = await fetch(`/api/link/${encodeURIComponent(token)}`);
         const d = await r.json();
         if (!r.ok) throw new Error(d.error || 'Lien invalide');
-        state.actionId = d.actionId; state.cipherKey = d.key;
+        state.actionId = d.actionId; state.cipherKey = d.key; state.role = d.role || 'participant'; state.token = token;
         // 🔒 Retire le token de l'URL (history.replaceState) : sur un téléphone
         // de terrain partagé, le lien n'est plus visible dans la barre d'adresse
         // ni dans l'historique du navigateur.
@@ -812,17 +818,39 @@
     }
 
     async function fetchExport() {
-      // 🔒 La clé est envoyée dans le corps (POST), jamais dans l'URL
+      // 🔒 La clé est envoyée dans le corps (POST), jamais dans l'URL.
+      // • Participant / créateur : clé maître présente → on l'envoie.
+      // • Animateur / GA : pas de clé → on envoie le TOKEN, le serveur déchiffre.
+      const body = state.cipherKey ? { masterKey: state.cipherKey } : { token: state.token };
       const r = await fetch(`/api/actions/${state.actionId}/export`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ masterKey: state.cipherKey })
+        body: JSON.stringify(body)
       });
       return r;
     }
 
+    // 🎭 Adapte l'interface au rôle : un PARTICIPANT ne voit pas l'onglet Résultats.
+    function applyRole() {
+      const isViewer = state.role === 'animator' || state.role === 'ga';
+      const compilTab = document.getElementById('tab-compil');
+      if (compilTab) compilTab.classList.toggle('hidden', !isViewer);
+      // Un lecteur (animateur/GA) ne saisit pas : on masque l'onglet Saisir et on
+      // ouvre directement les Résultats.
+      const saisieTab = document.getElementById('tab-saisie');
+      if (saisieTab) saisieTab.classList.toggle('hidden', isViewer);
+      // Badge de rôle dans la barre d'action
+      const bar = document.getElementById('actionBarName');
+      if (bar) {
+        const badge = isViewer
+          ? (state.role === 'ga' ? ' · <span style="color:#4C0297">GA</span>' : ' · <span style="color:#4C0297">animateur</span>')
+          : '';
+        if (badge) bar.insertAdjacentHTML('beforeend', badge);
+      }
+    }
+
     async function loadAction() {
       document.getElementById('action-bar').classList.remove('hidden');
-      show('view-action'); showTab('saisie');
+      show('view-action'); applyRole(); showTab(state.role === 'participant' ? 'saisie' : 'compil');
       try {
         const r = await fetchExport();
         if (r.ok) { const d = await r.json(); state.actionName = d.action.name; document.getElementById('actionBarName').innerHTML = '<span class="dot">●</span> ' + esc(d.action.name); }
