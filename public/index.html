@@ -229,6 +229,24 @@
       font-size:.76rem; font-weight:700; margin:2px; border:1px solid #d3c9e8;
     }
 
+    /* 📊 Graphiques (camembert + barres) */
+    .charts-wrap { margin-bottom: 18px; }
+    .charts-wrap:empty { display: none; }
+    .chart-card {
+      border:1px solid var(--lfi-border); border-radius:14px; padding:16px; margin-bottom:14px; background:#fff;
+    }
+    .chart-title { font-weight:800; font-size:.9rem; margin-bottom:12px; color:var(--lfi-black); }
+    .donut-wrap { display:flex; align-items:center; gap:22px; flex-wrap:wrap; }
+    .lg { display:flex; flex-direction:column; gap:6px; font-size:.8rem; }
+    .lg-item { display:flex; align-items:center; gap:7px; }
+    .lg-dot { width:12px; height:12px; border-radius:3px; flex-shrink:0; }
+    .bars { display:flex; flex-direction:column; gap:9px; }
+    .bar-row { display:flex; align-items:center; gap:10px; }
+    .bar-label { width:105px; font-size:.76rem; font-weight:600; flex-shrink:0; }
+    .bar-track { flex:1; height:16px; background:#f0ede7; border-radius:8px; overflow:hidden; }
+    .bar-fill { height:100%; border-radius:8px; transition:width .4s ease; }
+    .bar-val { width:34px; text-align:right; font-size:.78rem; font-weight:800; }
+
     .table-wrap { overflow-x: auto; border: 1px solid var(--lfi-border); border-radius: 14px; }
     table { width: 100%; border-collapse: collapse; font-size: .82rem; }
     th, td { padding: 11px 9px; border-bottom: 1px solid #f0ede7; text-align: left; }
@@ -454,10 +472,12 @@
         <div class="card">
           <div id="compilStats"></div>
           <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
-            <button class="btn secondary small" onclick="exportCsv()">⬇️ Exporter CSV</button>
-            <button class="btn danger small" onclick="purgeData()">🗑️ Supprimer les données</button>
+            <button id="btnExportCsv" class="btn secondary small" onclick="exportCsv()">⬇️ Exporter CSV</button>
+            <button id="btnPurge" class="btn danger small" onclick="purgeData()">🗑️ Supprimer les données</button>
           </div>
-          <div class="table-wrap">
+          <!-- 📊 Visualisations (camembert + barres) — injectées par renderCharts() -->
+          <div id="compilCharts" class="charts-wrap"></div>
+          <div class="table-wrap" id="compilTableWrap">
             <table id="compilTable">
               <thead>
                 <tr><th>Rue</th><th>N°</th><th>Étage</th><th>N° porte</th><th>Interaction</th><th>Détails</th><th>Équipe</th><th>Heure</th></tr>
@@ -829,22 +849,27 @@
       return r;
     }
 
-    // 🎭 Adapte l'interface au rôle : un PARTICIPANT ne voit pas l'onglet Résultats.
+    // 🎭 Adapte l'interface au rôle.
+    //  • Participant (militant) : onglet SAISIR + onglet RÉSULTATS (stats globales +
+    //    graphiques uniquement — PAS de tableau nominatif, PAS de CSV).
+    //  • Animateur / GA : résultats complets (graphiques + tableau + CSV + purge).
     function applyRole() {
       const isViewer = state.role === 'animator' || state.role === 'ga';
+      // Tout le monde voit les résultats (au moins les stats globales).
       const compilTab = document.getElementById('tab-compil');
-      if (compilTab) compilTab.classList.toggle('hidden', !isViewer);
-      // Un lecteur (animateur/GA) ne saisit pas : on masque l'onglet Saisir et on
-      // ouvre directement les Résultats.
-      const saisieTab = document.getElementById('tab-saisie');
-      if (saisieTab) saisieTab.classList.toggle('hidden', isViewer);
+      if (compilTab) compilTab.classList.remove('hidden');
+      // Éléments réservés aux animateurs/GA : tableau nominatif, CSV, purge.
+      ['compilTableWrap', 'btnExportCsv', 'btnPurge'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.toggle('hidden', !isViewer);
+      });
       // Badge de rôle dans la barre d'action
       const bar = document.getElementById('actionBarName');
       if (bar) {
         const badge = isViewer
           ? (state.role === 'ga' ? ' · <span style="color:#4C0297">GA</span>' : ' · <span style="color:#4C0297">animateur</span>')
-          : '';
-        if (badge) bar.insertAdjacentHTML('beforeend', badge);
+          : ' · <span style="color:#4C0297">militant</span>';
+        bar.insertAdjacentHTML('beforeend', badge);
       }
     }
 
@@ -990,26 +1015,49 @@
     }
 
     async function loadCompil() {
-      if (!state.actionId || !state.cipherKey) return;
+      // 🎭 On peut charger la compilation avec la clé maître (créateur/participant)
+      // OU avec le token (animateur/GA → déchiffrement côté serveur).
+      if (!state.actionId || (!state.cipherKey && !state.token)) return;
       const statsEl = document.getElementById('compilStats'); const tbody = document.querySelector('#compilTable tbody');
       statsEl.innerHTML = '<p class="muted">Chargement...</p>'; tbody.innerHTML = '';
+      const isViewer = state.role === 'animator' || state.role === 'ga';
       try {
-        const r = await fetchExport();
-        const d = await r.json();
-        if (!r.ok) throw new Error(d.error || 'Erreur');
+        let d, counts;
+        if (isViewer || state.cipherKey) {
+          // Animateur/GA OU clé maître présente → détail complet via /export.
+          const r = await fetchExport();
+          d = await r.json();
+          if (!r.ok) throw new Error(d.error || 'Erreur');
+          counts = {};
+          (d.doors || []).forEach(x => { counts[x.interaction] = (counts[x.interaction]||0)+1; });
+        } else {
+          // Participant par lien : stats AGRÉGÉES uniquement (aucune donnée perso).
+          const r = await fetch(`/api/actions/${state.actionId}/summary`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token: state.token })
+          });
+          d = await r.json();
+          if (!r.ok) throw new Error(d.error || 'Erreur');
+          const map = { sympathique: 'Sympathique', interesse: 'Intéressé', adherent: 'Adhérent', indecis: 'Indécis', absent: 'Pas de réponse', refus: 'Refus', neSonnePas: 'Ne sonne pas' };
+          counts = {};
+          Object.entries(map).forEach(([k, label]) => { if (d[k]) counts[label] = d[k]; });
+          d = { action: { name: state.actionName || 'Action' }, total: d.total, doors: [] };
+        }
         statsEl.innerHTML = `
           <div class="stats-box">
             <div class="label">${esc(d.action.name)}</div>
             <div class="big">${d.total}</div>
             <div class="label">portes enregistrées</div>
           </div>`;
-        const counts = {};
-        d.doors.forEach(x => { counts[x.interaction] = (counts[x.interaction]||0)+1; });
         if (d.total > 0) {
           let sum = '<div class="chip-row">';
           Object.entries(counts).forEach(([k,v]) => { const label = (INTERACTIONS.find(i=>i.id===k)||{}).label || k; sum += `<span class="chip">${label} : ${v}</span> `; });
           sum += '</div>'; statsEl.innerHTML += sum;
         }
+        // 📊 Visualisation : camembert (répartition) + barres (par interaction)
+        renderCharts(d.doors || [], counts);
+        // 🚫 Le tableau nominatif n'est rempli que pour les lecteurs (animateur/GA).
+        if (!isViewer) return;
         document.querySelector('#compilTable thead tr').innerHTML = '<th>Rue</th><th>N°</th><th>Étage</th><th>N° porte</th><th>Interaction</th><th>Détails</th><th>Équipe</th><th>Heure</th>';
         // Tri : regroupé par rue → puis par numéro de rue (numérique) → puis par date.
         // On parse le champ `building` (colonne DB) au format « <n°> <rue> ».
@@ -1035,6 +1083,67 @@
           tbody.appendChild(tr);
         });
       } catch (e) { statsEl.innerHTML = `<div class="status error">Erreur : ${e.message}${e.message.includes('incorrecte')?' — vérifiez la clé.':''}</div>`; }
+    }
+
+    // 📊 Graphiques SVG purs (aucune dépendance externe → marche hors-ligne)
+    const CHART_COLORS = {
+      sympathique: '#2E8B57', interesse: '#4C0297', adherent: '#E1000F',
+      indecis: '#F2C230', absent: '#9a9a9a', refus: '#101014', neSonnePas: '#c9c4bb'
+    };
+    function renderCharts(doors, counts) {
+      const wrap = document.getElementById('compilCharts');
+      if (!wrap) return;
+      const entries = Object.entries(counts).filter(([, v]) => v > 0);
+      const total = doors.length;
+      if (!total) { wrap.innerHTML = ''; return; }
+
+      // --- CAMEMBERT (donut SVG) ---
+      const R = 70, C = 90, circ = 2 * Math.PI * R;
+      let offset = 0, slices = '', legend = '';
+      entries.forEach(([k, v]) => {
+        const frac = v / total, len = frac * circ;
+        const color = CHART_COLORS[k] || '#888';
+        const label = (INTERACTIONS.find(i => i.id === k) || {}).label || k;
+        slices += `<circle r="${R}" cx="${C}" cy="${C}" fill="none" stroke="${color}" stroke-width="28"
+          stroke-dasharray="${len} ${circ - len}" stroke-dashoffset="${-offset}"
+          transform="rotate(-90 ${C} ${C})"></circle>`;
+        legend += `<div class="lg-item"><span class="lg-dot" style="background:${color}"></span>${esc(label)} <b>${v}</b> <span class="muted">(${Math.round(frac*100)}%)</span></div>`;
+        offset += len;
+      });
+      const donut = `
+        <div class="chart-card">
+          <div class="chart-title">🥧 Répartition des interactions</div>
+          <div class="donut-wrap">
+            <svg viewBox="0 0 ${C*2} ${C*2}" width="180" height="180">
+              <circle r="${R}" cx="${C}" cy="${C}" fill="none" stroke="#eee" stroke-width="28"></circle>
+              ${slices}
+              <text x="${C}" y="${C-4}" text-anchor="middle" font-size="22" font-weight="700" fill="#101014">${total}</text>
+              <text x="${C}" y="${C+14}" text-anchor="middle" font-size="10" fill="#8a857c">portes</text>
+            </svg>
+            <div class="lg">${legend}</div>
+          </div>
+        </div>`;
+
+      // --- BARRES (par interaction) ---
+      const max = Math.max(...entries.map(e => e[1]));
+      let bars = '';
+      entries.sort((a, b) => b[1] - a[1]).forEach(([k, v]) => {
+        const label = (INTERACTIONS.find(i => i.id === k) || {}).label || k;
+        const color = CHART_COLORS[k] || '#888';
+        const w = Math.round((v / max) * 100);
+        bars += `<div class="bar-row">
+          <div class="bar-label">${esc(label)}</div>
+          <div class="bar-track"><div class="bar-fill" style="width:${w}%;background:${color}"></div></div>
+          <div class="bar-val">${v}</div>
+        </div>`;
+      });
+      const barChart = `
+        <div class="chart-card">
+          <div class="chart-title">📊 Nombre de portes par interaction</div>
+          <div class="bars">${bars}</div>
+        </div>`;
+
+      wrap.innerHTML = donut + barChart;
     }
 
     function exportCsv() {
@@ -1073,7 +1182,9 @@
     function hideStatus() { const el=document.getElementById('status'); el.className='status'; el.textContent=''; }
 
     (function init() {
-      const pathMatch = window.location.pathname.match(/^\/r\/([^/]+)$/);
+      // 📎 Liens opaques : /r/<token> (participant), /a/<token> (animateur), /g/<token> (GA).
+      // Le rôle est ensuite déterminé par /api/link/:token, mais on accepte les 3 préfixes.
+      const pathMatch = window.location.pathname.match(/^\/(?:r|a|g)\/([^/]+)$/);
       if (pathMatch) openToken(decodeURIComponent(pathMatch[1]));
       else { history.replaceState({}, '', '/'); show('view-home'); }
     })();
