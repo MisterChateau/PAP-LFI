@@ -231,6 +231,32 @@ app.get('/api/link/:token', async (req, res) => {
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 function isValidUUID(v) { return typeof v === 'string' && UUID_RE.test(v); }
 
+/**
+ * Résout un lien (code court OU token opaque long) → { actionId, key, role } ou null.
+ * Utilisé par /export et /summary pour accepter les deux formats.
+ */
+async function resolveLink(raw) {
+  if (!raw || typeof raw !== 'string') return null;
+  // Code court ? (base62, 6 à 14 caractères)
+  if (/^[A-Za-z0-9_-]{6,14}$/.test(raw)) {
+    const { data: link, error } = await supabase
+      .from('short_links')
+      .select('code, action_id, role, expires_at')
+      .eq('code', raw)
+      .maybeSingle();
+    if (error || !link) return null;
+    if (link.expires_at && Date.now() > new Date(link.expires_at).getTime()) return null;
+    let key = null;
+    if (link.role === 'participant') {
+      const { data: act } = await supabase.from('actions').select('master_key_encrypted').eq('id', link.action_id).maybeSingle();
+      key = act && act.master_key_encrypted ? unsealMasterKey(act.master_key_encrypted) : null;
+    }
+    return { actionId: link.action_id, key, role: link.role || 'participant' };
+  }
+  // Token opaque long (rétro-compat)
+  return decodeToken(raw);
+}
+
 // --- Routes API ---
 
 /**
@@ -419,7 +445,7 @@ app.post('/api/actions/:id/export', async (req, res) => {
     let roleFromToken = null;
     let tokenActionId = null;
     if (token) {
-      const decoded = decodeToken(token);
+      const decoded = await resolveLink(token);
       if (!decoded) {
         return res.status(401).json({ error: 'Lien invalide ou expiré.' });
       }
@@ -548,7 +574,7 @@ app.post('/api/actions/:id/summary', async (req, res) => {
     // Détermination de la clé de déchiffrement
     let decryptKey = null;
     if (token) {
-      const decoded = decodeToken(token);
+      const decoded = await resolveLink(token);
       if (!decoded || decoded.actionId !== actionId) {
         return res.status(403).json({ error: 'Lien invalide pour cette action.' });
       }
