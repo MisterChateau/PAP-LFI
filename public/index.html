@@ -682,7 +682,7 @@
   <script>
     // 🔖 Version du front (affichée discrètement) — permet de vérifier d'un coup d'œil
     // que le téléphone a bien rechargé la dernière version après un déploiement.
-    const APP_VERSION = '2026-10-11.7';
+    const APP_VERSION = '2026-10-11.8';
     const INTERACTIONS = [
       { id: 'pas-reponse', label: '📬 Pas de réponse' },
       { id: 'sympa', label: '😊 Sympathique' },
@@ -1402,6 +1402,11 @@
                 location.reload();
               }
             });
+          });
+          // 🔄 Vérifie s'il existe une MAJ quand l'appli revient au premier plan
+          // (PWA laissée ouverte) → propagation plus rapide des nouvelles versions.
+          document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) { try { reg.update(); } catch (e) {} }
           });
         }).catch(() => {});
       });

@@ -139,6 +139,25 @@ npm start          # ou npm run dev
 # → http://localhost:3000 (ou PORT choisi)
 ```
 
+### 🔄 Livraison d'une nouvelle version (PWA) — à faire à CHAQUE release
+
+La PWA met à jour toute seule, mais **2 bumps sont obligatoires** sinon les téléphones
+restent bloqués sur l'ancienne version :
+
+1. **`CACHE_VERSION`** dans `public/sw.js` (ex. `v2026-10-11f`) → purge l'ancien cache à l'activation.
+2. **`APP_VERSION`** dans `public/index.html` → version visible en pied de page (vérif de déploiement).
+
+Ce qui est **déjà géré automatiquement** (ne pas casser) :
+- `sw.js` servi en `no-cache, no-store` (détection des MAJ) — voir `src/server.js`.
+- HTML en `no-store` + **réseau d'abord** dans le `fetch` du SW.
+- `skipWaiting()` + `clients.claim()` → nouvelle version active immédiatement.
+- Reload auto **uniquement s'il y avait déjà un contrôleur** (vraie MAJ) + vérif au retour au premier plan.
+- L'action en cours est mémorisée en `sessionStorage` (par onglet) → un F5 ou le reload de MAJ
+  **rouvre l'action** au lieu de renvoyer à l'accueil (jamais de token dans l'URL).
+
+> Vérif post-déploiement : `curl -s https://pap-lfi.onrender.com/ | grep APP_VERSION` doit
+> afficher la nouvelle version.
+
 ---
 
 ## ✅ Checklist avant commit
@@ -149,13 +168,14 @@ npm start          # ou npm run dev
 - [ ] Les valeurs affichées via `innerHTML` sont `esc()`-ées
 - [ ] Pas de n° de rue / n° de porte confondus
 - [ ] Testé le tri (rue → n° → date) si touché à la compilation
+- [ ] **Release PWA** : `CACHE_VERSION` (sw.js) **et** `APP_VERSION` bumpés
+- [ ] **Tags git** : taguer la version livrée (ex. `v1.2.x-…`)
 
 ---
 
 ## 🕓 Journal des changements notables
 
-### 2026-09-21 — Adresse obligatoire + GPS + tri par n° de rue
-- **Demande terrain** : les militants ne saisissaient pas l'adresse (optionnelle) → données
+### 2026-09-21 — Adresse obligatoire + GPS + tri par n° de rue- **Demande terrain** : les militants ne saisissaient pas l'adresse (optionnelle) → données
   inexploitables pour l'organisateur. L'organisateur veut **regrouper par n° de rue**
   (le siège a une app à remplir par numéro de rue, et une équipe couvre plusieurs n° d'une rue).
 - **Ajouté** : champs `N° rue` + `Rue` **obligatoires** (remplace l'ancien champ unique « Immeuble / rue »).
