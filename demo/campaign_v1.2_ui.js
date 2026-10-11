@@ -26,10 +26,11 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
   const home = await fetch(BASE + '/');
   const html = await home.text();
   ok('GET / → 200', home.status === 200, `status ${home.status}`);
-  ok('Version déployée = 2026-10-11.3', html.includes("APP_VERSION = '2026-10-11.3'"));
+  ok('Version déployée = 2026-10-11.4', html.includes("APP_VERSION = '2026-10-11.4'"));
   ok('Front contient contactPrompt', html.includes('contactPrompt'));
   ok('Front contient toggleContact/dismissContact', html.includes('toggleContact') && html.includes('dismissContact'));
   ok('Front contient lastCompilDoors (fix CSV)', html.includes('lastCompilDoors'));
+  ok('Front contient le fix token/reload SW', html.includes('pap_pending_token') && html.includes('hadController'));
 
   // Action A (aucun contact) et Action B (avec contact)
   const mk = (name) => fetch(BASE + '/api/actions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name }) }).then(r => r.json());
