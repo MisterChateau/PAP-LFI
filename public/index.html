@@ -681,7 +681,7 @@
   <script>
     // 🔖 Version du front (affichée discrètement) — permet de vérifier d'un coup d'œil
     // que le téléphone a bien rechargé la dernière version après un déploiement.
-    const APP_VERSION = '2026-10-11.2';
+    const APP_VERSION = '2026-10-11.3';
     const INTERACTIONS = [
       { id: 'pas-reponse', label: '📬 Pas de réponse' },
       { id: 'sympa', label: '😊 Sympathique' },
@@ -791,6 +791,9 @@
     let state = {
       actionId: null, cipherKey: '', actionName: '', selectedInteraction: null, serverTotal: 0, role: 'participant', token: null
     };
+    // Dernières portes chargées (vue animateur/GA) — sert à l'export CSV complet,
+    // indépendant des colonnes adaptatives affichées à l'écran.
+    let lastCompilDoors = [];
 
     // Encodage HTML (anti-XSS) pour tout affichage via innerHTML
     function esc(v) {
@@ -1150,6 +1153,7 @@
           if (A.num !== B.num) return A.num - B.num;
           return new Date(a.createdAt || 0) - new Date(b.createdAt || 0);
         });
+        lastCompilDoors = sorted; // 📄 pour l'export CSV (toujours complet)
         // 🧩 Colonnes ADAPTATIVES : on masque les colonnes vides (ex. Étage/N° porte quand
         // aucune prise de contact) → pas de colonnes fantômes, moins de scroll horizontal.
         const nonEmpty = (v) => v != null && String(v).trim() !== '';
@@ -1245,9 +1249,22 @@
     }
 
     function exportCsv() {
-      const tbody = document.querySelector('#compilTable tbody'); const rows = [...tbody.querySelectorAll('tr')];
+      // 📄 CSV reconstruit depuis les DONNÉES (toutes les colonnes), jamais depuis le tableau
+      // à l'écran (dont les colonnes vides sont masquées) → export complet et toujours aligné.
+      const rows = lastCompilDoors || [];
+      const interLabelCsv = (id) => (INTERACTIONS.find(i => i.id === id) || {}).label || id || '';
+      const parseAddrCsv = (b) => {
+        const s = String(b == null ? '' : b).trim();
+        const m = s.match(/^(\d+)\s*[\s,]*\s*(.*)$/);
+        return m ? { numRaw: m[1], street: (m[2] || '').trim() } : { numRaw: '', street: s };
+      };
+      const cellCsv = (v) => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
       let csv = 'Rue;N°;Étage;N° porte;Interaction;Détails;Équipe;Heure\n';
-      rows.forEach(tr => { const cols = [...tr.querySelectorAll('td')].map(td => '"'+(td.textContent||'').replace(/"/g,'""')+'"'); csv += cols.join(';')+'\n'; });
+      rows.forEach(d => {
+        const a = parseAddrCsv(d.building);
+        const time = d.createdAt ? new Date(d.createdAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '';
+        csv += [a.street, a.numRaw, d.floor, d.doorNumber, interLabelCsv(d.interaction), d.details, d.team, time].map(cellCsv).join(';') + '\n';
+      });
       const blob = new Blob(['\uFEFF'+csv], { type: 'text/csv;charset=utf-8;' });
       const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download='pap-lfi-compilation.csv'; a.click();
     }
