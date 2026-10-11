@@ -178,6 +178,13 @@
       border: 1px solid rgba(76,2,151,.25); border-radius: var(--r-md); }
     a.btn.small.contact-btn.full { display: block; text-align: center; font-size: .74rem; letter-spacing: .3px; padding: var(--sp-3) var(--sp-2); }
 
+    /* 📨 Bloc d'accès par lien (accueil, PWA installée) */
+    .access-box { background: var(--lfi-violet-soft); border: 1px solid rgba(76,2,151,.28); border-radius: var(--r-lg);
+      padding: var(--pad-card); margin-bottom: var(--gap); }
+    .access-box b { color: var(--lfi-violet-deep); font-size: .95rem; }
+    .access-box input { margin-bottom: var(--sp-3); }
+    .access-box .status { margin: var(--sp-3) 0 0; font-size: .82rem; }
+
     /* CTA créer une action */
     .cta {
       width: 100%; padding: 28px; border: 3px solid var(--lfi-red); border-radius: 20px;
@@ -387,6 +394,16 @@
           ➕ Créer une action
           <span class="sub">Générez un lien à partager dans votre groupe</span>
         </button>
+
+        <!-- 📨 Accès par lien : affiché UNIQUEMENT si l'appli est installée (PWA).
+             Dans une PWA on ne peut pas cliquer un lien externe → on colle le lien reçu ici. -->
+        <div class="access-box hidden" id="homeAccessBox">
+          <b>📨 Tu as reçu un lien d'action ?</b>
+          <p class="muted" style="font-size:.82rem;margin:4px 0 10px">Colle-le ici pour rejoindre l'action (lien complet ou juste le code).</p>
+          <input type="text" id="homeAccessInput" placeholder="Colle le lien reçu…" autocomplete="off" autocapitalize="off" spellcheck="false" onkeydown="if(event.key==='Enter'){event.preventDefault();accessFromHome()}">
+          <button class="btn violet" onclick="accessFromHome()">➜ Accéder à l'action</button>
+          <div class="status error" id="homeAccessStatus" style="display:none"></div>
+        </div>
         <div class="how-block">
           <h3>Comment ça marche</h3>
           <p>
@@ -685,7 +702,7 @@
   <script>
     // 🔖 Version du front (affichée discrètement) — permet de vérifier d'un coup d'œil
     // que le téléphone a bien rechargé la dernière version après un déploiement.
-    const APP_VERSION = '2026-10-11.12';
+    const APP_VERSION = '2026-10-11.13';
     const INTERACTIONS = [
       { id: 'pas-reponse', label: '📬 Pas de réponse' },
       { id: 'sympa', label: '😊 Sympathique' },
@@ -810,12 +827,51 @@
     }
     function showCreate() { show('view-create'); document.getElementById('createResult').innerHTML=''; }
 
+    // 📨 Bloc d'accès par lien : visible SEULEMENT si l'appli tourne en mode installé (PWA).
+    function maybeShowHomeAccess() {
+      const box = document.getElementById('homeAccessBox');
+      if (!box) return;
+      const installed = (typeof isStandalone === 'function') && isStandalone();
+      box.classList.toggle('hidden', !installed);
+    }
+
+    // 🔗 Extrait le token/code d'un lien collé (URL complète, URL préfixée, ou code brut).
+    function extractToken(str) {
+      let s = String(str || '').trim();
+      if (!s) return '';
+      try {
+        if (/^https?:\/\//i.test(s)) {
+          const u = new URL(s);
+          const m = u.pathname.match(/^\/(?:r|a|g)\/([^/]+)\/?$/);
+          if (m) return decodeURIComponent(m[1]);
+          const seg = u.pathname.split('/').filter(Boolean);
+          return seg.length ? decodeURIComponent(seg[seg.length - 1]) : '';
+        }
+      } catch (e) {}
+      const m2 = s.match(/^(?:.*\/)?(?:r|a|g)\/([^/]+)\/?$/);
+      if (m2) return decodeURIComponent(m2[1]);
+      return s; // code court ou token brut
+    }
+
+    function accessFromHome() {
+      const el = document.getElementById('homeAccessInput');
+      const st = document.getElementById('homeAccessStatus');
+      const token = extractToken(el ? el.value : '');
+      if (!token) {
+        if (st) { st.textContent = 'Colle un lien ou un code valide.'; st.style.display = 'block'; }
+        return;
+      }
+      if (st) { st.style.display = 'none'; }
+      if (el) el.value = '';
+      openToken(token);
+    }
+
     function exitAction() {
       state.actionId = null; state.cipherKey = ''; state.actionName = ''; state.selectedInteraction = null;
       try { localStorage.removeItem('pap_current_action'); } catch (e) {}
       document.getElementById('action-bar').classList.add('hidden');
       history.replaceState({}, '', '/');
-      show('view-home');
+      show('view-home'); maybeShowHomeAccess();
     }
 
     function showTab(tab) {
@@ -1322,8 +1378,8 @@
         // l'icône (sans recliquer un lien), et à un F5 de rester dans l'action.
         let saved = null;
         try { saved = localStorage.getItem('pap_current_action'); } catch (e) {}
-        if (saved) openToken(saved);
-        else { history.replaceState({}, '', '/'); show('view-home'); }
+        if (saved) { openToken(saved); }
+        else { history.replaceState({}, '', '/'); show('view-home'); maybeShowHomeAccess(); }
       }
     })();
 

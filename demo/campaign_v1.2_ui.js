@@ -165,8 +165,22 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
   ok('CSV : toutes les lignes alignées (8 colonnes)', rowCols.every(n => n === 8), JSON.stringify(rowCols));
   ok('CSV : 3 lignes de données (action B)', lines.length - 1 === 3, `${lines.length - 1}`);
 
+  // --- 7) Accueil PWA installée : accès par lien collé ---
+  console.log('\n--- 7) Accueil PWA installée (accès par lien collé) ---');
+  await c.send('Emulation.setEmulatedMedia', { features: [{ name: 'display-mode', value: 'standalone' }] });
+  await ev("try{localStorage.removeItem('pap_current_action')}catch(e){}");
+  await Page.navigate({ url: BASE + '/' });
+  await Page.loadEventFired();
+  await sleep(1200);
+  ok('PWA installée : bloc \"Accéder à l\'action\" visible', !(await ev("document.getElementById('homeAccessBox').classList.contains('hidden')")));
+  ok('extractToken(URL complète) OK', (await ev("extractToken('https://pap-lfi.onrender.com/r/" + (B.shortCode || B.token) + "')")) === (B.shortCode || B.token));
+  await ev("document.getElementById('homeAccessInput').value='https://pap-lfi.onrender.com/r/" + (B.shortCode || B.token) + "'; accessFromHome();");
+  await waitFor("typeof state!=='undefined' && !!state.actionId && document.getElementById('interactionsBox') && document.getElementById('interactionsBox').children.length>0", 25000);
+  ok('Lien collé → ouvre bien l\'action', (await ev("document.getElementById('actionBarName').textContent")).includes('TEST v1.2 B'));
+  await c.send('Emulation.setEmulatedMedia', { features: [] });
+
   // --- Nettoyage : purge des actions de test ---
-  console.log('\n--- 7) Nettoyage (purge RGPD des actions de test) ---');
+  console.log('\n--- 8) Nettoyage (purge RGPD des actions de test) ---');
   for (const [id, key] of [[A.id, keyA], [B.id, keyB]]) {
     const r = await fetch(`${BASE}/api/actions/${id}/purge`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ masterKey: key }) });
     ok('Purge action ' + id.slice(0, 8), r.ok, `status ${r.status}`);
