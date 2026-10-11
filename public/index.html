@@ -31,6 +31,12 @@
       --lfi-border: #E7E3DC;
       --lfi-gold: #F2C230;
       --lfi-green: #2E8B57;
+      /* 📐 Échelle d'espacement unique (grille de 4px) — à utiliser partout */
+      --sp-1: 4px; --sp-2: 8px; --sp-3: 12px; --sp-4: 16px; --sp-5: 20px; --sp-6: 24px;
+      --gap: var(--sp-4);          /* écart standard entre blocs */
+      --pad-card: var(--sp-5);     /* padding interne des cartes */
+      --pad-box: var(--sp-3);      /* padding des encadrés compacts */
+      --r-sm: 10px; --r-md: 12px; --r-lg: 16px; --r-card: 20px;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
     html { scroll-behavior: smooth; }
@@ -93,39 +99,39 @@
     }
     .exit-btn:hover { background: var(--lfi-red-deep); }
 
-    .container { max-width: 600px; margin: 0 auto; padding: 22px 18px; }
+    .container { max-width: 600px; margin: 0 auto; padding: var(--sp-5) var(--sp-4); }
 
     /* ===== CARTES ===== */
     .card {
-      background: #fff; border: 1px solid var(--lfi-border); border-radius: 20px;
-      padding: 24px; margin-bottom: 18px;
+      background: #fff; border: 1px solid var(--lfi-border); border-radius: var(--r-card);
+      padding: var(--pad-card); margin-bottom: var(--gap);
       box-shadow: 0 4px 16px rgba(0,0,0,.06);
     }
     h2 {
       font-family: 'Anton', sans-serif; font-weight: 400; text-transform: uppercase;
-      font-size: 1.3rem; letter-spacing: 1px; margin-bottom: 18px; color: var(--lfi-black);
+      font-size: 1.3rem; letter-spacing: 1px; margin-bottom: var(--gap); color: var(--lfi-black);
     }
     .section-tag {
       display: inline-block; background: var(--lfi-red); color: #fff;
       font-size: .6rem; font-weight: 800; letter-spacing: 2.5px;
-      padding: 4px 12px; border-radius: 3px; text-transform: uppercase; margin-bottom: 12px;
+      padding: var(--sp-1) var(--sp-3); border-radius: 3px; text-transform: uppercase; margin-bottom: var(--sp-3);
     }
 
     /* ===== FORMULAIRE ===== */
     label { display: block; font-size: .74rem; font-weight: 800; margin-bottom: 6px; color: #555; text-transform: uppercase; letter-spacing: 1px; }
     input, select, textarea {
-      width: 100%; padding: 15px 14px; border: 2px solid var(--lfi-border); border-radius: 12px;
-      font-size: 1rem; margin-bottom: 16px; background: var(--lfi-cream); font-family: 'Inter', sans-serif;
+      width: 100%; padding: 14px; border: 2px solid var(--lfi-border); border-radius: var(--r-md);
+      font-size: 1rem; margin-bottom: var(--gap); background: var(--lfi-cream); font-family: 'Inter', sans-serif;
       transition: border-color .15s, background .15s;
     }
     input:focus, select:focus, textarea:focus { border-color: var(--lfi-red); outline: none; background: #fff; }
     textarea { min-height: 66px; resize: vertical; }
-    .row { display: flex; gap: 10px; }
-    .row > div { flex: 1; }
+    .row { display: flex; gap: var(--sp-3); }
+    .row > div { flex: 1; min-width: 0; }
 
     /* ===== BOUTONS ===== */
     .btn {
-      width: 100%; padding: 17px; border: none; border-radius: 12px;
+      width: 100%; padding: 16px; border: none; border-radius: var(--r-md);
       font-size: .98rem; font-weight: 800; cursor: pointer; letter-spacing: 1px;
       background: var(--lfi-red); color: #fff; text-transform: uppercase;
       transition: transform .1s, opacity .2s, background .15s; font-family: 'Inter', sans-serif;
@@ -142,32 +148,31 @@
     .btn.danger { background: #c0392b; box-shadow: 0 3px 10px rgba(192,57,43,.3); }
     .btn.danger:hover { background: #a93226; }
     .btn:disabled { opacity: .5; cursor: not-allowed; }
-    .btn.small { padding: 12px; font-size: .8rem; border-radius: 10px; }
-    .btn.gps-btn { width: 100%; margin: 4px 0 12px; background: var(--lfi-red); color: #fff; font-weight: 800; text-transform: none; letter-spacing: .2px; font-size: .92rem; padding: 13px; box-shadow: 0 3px 10px rgba(225,0,15,.2); }
-    .btn.gps-btn:hover { background: var(--lfi-red-deep); }
-    .btn.gps-btn:disabled { opacity: .6; }
+    .btn.small { padding: var(--sp-3); font-size: .8rem; border-radius: var(--r-sm); }
 
     /* 📍 GPS discret : icône ancrée à droite du champ Rue (commodité, pas action principale) */
     .input-group { display: flex; align-items: stretch; }
     .input-group input { flex: 1 1 auto; min-width: 0; border-top-right-radius: 0; border-bottom-right-radius: 0; }
     .gps-inline { flex: 0 0 auto; border: 2px solid var(--lfi-border); border-left: none; background: var(--lfi-cream);
-      color: var(--lfi-violet-deep); font-size: 1.15rem; padding: 0 13px; cursor: pointer; margin-bottom: 16px;
-      border-top-right-radius: 12px; border-bottom-right-radius: 12px; transition: background .15s; }
+      color: var(--lfi-violet-deep); font-size: 1.15rem; padding: 0 var(--sp-3); cursor: pointer; margin-bottom: var(--gap);
+      border-top-right-radius: var(--r-md); border-bottom-right-radius: var(--r-md); transition: background .15s; }
     .gps-inline:hover { background: var(--lfi-violet-soft); }
     .gps-inline:disabled { opacity: .5; cursor: progress; }
 
-    /* 📇 Prise de contact : déclenchée contextuellement (interaction positive) */
-    .contact-prompt { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;
-      margin: 14px 0 0; padding: 10px 12px; background: rgba(76,2,151,.07); border: 1px dashed rgba(76,2,151,.4);
-      border-radius: 12px; font-size: .84rem; color: var(--lfi-violet-deep); }
-    .contact-prompt .btn { width: auto; }
-    .contact-fields { margin: 14px 0 0; padding: 12px 14px; background: var(--lfi-violet-soft); border: 1px solid rgba(76,2,151,.25); border-radius: 12px; }
-    .contact-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
-    .contact-head b { color: var(--lfi-violet-deep); font-size: .9rem; }
-    .contact-x { background: none; border: none; color: var(--lfi-violet-deep); font-size: 1.05rem; cursor: pointer; padding: 0 4px; line-height: 1; }
-    .contact-consent { display: flex; align-items: center; gap: 8px; font-size: .84rem; color: var(--lfi-violet-deep); cursor: pointer; user-select: none; margin-bottom: 10px; text-transform: none; letter-spacing: 0; }
-    .contact-consent input { width: 18px; height: 18px; flex: 0 0 auto; accent-color: var(--lfi-violet); margin: 0; }
-    a.btn.small.contact-btn.full { display: block; text-align: center; font-size: .74rem; letter-spacing: .3px; padding: 12px 8px; }
+    /* 📇 Prise de contact : déclenchée contextuellement (interaction positive).
+       Le bandeau (consentement + ✕) se transforme en section détaillée à la coche. */
+    .contact-prompt { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3);
+      margin: var(--gap) 0 0; padding: var(--pad-box); background: rgba(76,2,151,.07);
+      border: 1px dashed rgba(76,2,151,.4); border-radius: var(--r-md); }
+    .contact-consent { display: flex; align-items: center; gap: var(--sp-2); font-size: .84rem; font-weight: 700;
+      color: var(--lfi-violet-deep); cursor: pointer; user-select: none; margin: 0; flex: 1; text-transform: none; letter-spacing: 0; }
+    .contact-consent input { width: 20px; height: 20px; flex: 0 0 auto; accent-color: var(--lfi-violet); margin: 0; }
+    .contact-x { flex: 0 0 auto; background: none; border: none; color: var(--lfi-violet-deep); font-size: 1rem;
+      cursor: pointer; padding: var(--sp-1) var(--sp-2); line-height: 1; border-radius: var(--r-sm); }
+    .contact-x:hover { background: rgba(76,2,151,.12); }
+    .contact-fields { margin: var(--sp-3) 0 0; padding: var(--pad-box); background: var(--lfi-violet-soft);
+      border: 1px solid rgba(76,2,151,.25); border-radius: var(--r-md); }
+    a.btn.small.contact-btn.full { display: block; text-align: center; font-size: .74rem; letter-spacing: .3px; padding: var(--sp-3) var(--sp-2); }
 
     /* CTA créer une action */
     .cta {
@@ -192,16 +197,16 @@
     .how-block .lock { color: var(--lfi-gold); font-weight:700; }
 
     /* ===== INTERACTIONS (pastilles colorées) ===== */
-    .interactions { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 16px; }
+    .interactions { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--gap); margin-bottom: var(--gap); }
     .interaction {
-      padding: 15px 8px; border: 2px solid var(--lfi-border); border-radius: 12px; text-align: center;
+      padding: 14px 8px; border: 2px solid var(--lfi-border); border-radius: var(--r-md); text-align: center;
       cursor: pointer; font-weight: 700; font-size: .84rem; background: #fff; transition: all .15s;
       color: #333;
     }
     .interaction.selected { border-color: var(--lfi-red); background: var(--lfi-red-soft); color: var(--lfi-red); box-shadow: 0 0 0 2px rgba(225,0,15,.15); }
 
     /* ===== STATUT ===== */
-    .status { text-align: center; padding: 14px; border-radius: 12px; margin-bottom: 14px; font-weight: 700; display: none; font-size: .9rem; }
+    .status { text-align: center; padding: var(--sp-3); border-radius: var(--r-md); margin-bottom: var(--sp-3); font-weight: 700; display: none; font-size: .9rem; }
     .status.success { background: #e5f4e8; color: #23704a; display: block; }
     .status.error { background: var(--lfi-red-soft); color: #c62828; display: block; }
 
@@ -211,13 +216,13 @@
     .big-counter .nums .slash { color: var(--lfi-black); }
     .big-counter .label { font-size: .72rem; font-weight: 800; text-transform: uppercase; letter-spacing: 2.5px; color: var(--lfi-gray); margin-top: 4px; }
     /* barre de progression rouge→violet */
-    .progress { height: 12px; background: var(--lfi-border); border-radius: 20px; margin: 16px 0 4px; overflow: hidden; }
+    .progress { height: 12px; background: var(--lfi-border); border-radius: 20px; margin: var(--gap) 0 var(--sp-1); overflow: hidden; }
     .progress .fill { height: 100%; background: linear-gradient(90deg, var(--lfi-red), var(--lfi-violet)); border-radius: 20px; transition: width .4s ease; }
 
     /* ===== ONGLETS ===== */
-    .tabs { display: flex; gap: 8px; margin-bottom: 18px; }
+    .tabs { display: flex; gap: var(--sp-2); margin-bottom: var(--gap); }
     .tab {
-      flex: 1; min-height: 76px; padding: 9px 6px; border: 2px solid var(--lfi-border); border-radius: 13px;
+      flex: 1; min-height: 76px; padding: var(--sp-2) 6px; border: 2px solid var(--lfi-border); border-radius: var(--r-md);
       display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
       text-align: center; font-weight: 800; font-size: .76rem; line-height: 1.15; cursor: pointer;
       background: #fff; color: var(--lfi-black); text-transform: uppercase; letter-spacing: .3px;
@@ -228,24 +233,24 @@
 
     /* ===== LIEN ===== */
     .link-box {
-      background: var(--lfi-cream); border: 2px dashed #c9c4ba; padding: 14px;
-      border-radius: 12px; word-break: break-all; font-size: .84rem; margin: 14px 0;
+      background: var(--lfi-cream); border: 2px dashed #c9c4ba; padding: var(--sp-3);
+      border-radius: var(--r-md); word-break: break-all; font-size: .84rem; margin: var(--gap) 0;
       font-family: monospace; color: #333;
     }
-    .copy-btn { background: var(--lfi-black); color:#fff; border:none; padding:13px; border-radius:11px; font-weight:800; cursor:pointer; width:100%; margin-top:6px; text-transform:uppercase; letter-spacing:1px; font-size:.9rem; }
+    .copy-btn { background: var(--lfi-black); color:#fff; border:none; padding: var(--sp-3); border-radius: var(--r-md); font-weight:800; cursor:pointer; width:100%; margin-top: var(--sp-2); text-transform:uppercase; letter-spacing:1px; font-size:.9rem; }
     .copy-btn:hover { background: #2a2a30; }
 
     /* ===== COMPILATION (violet) ===== */
     .stats-box {
       background: linear-gradient(135deg, var(--lfi-violet) 0%, var(--lfi-violet-deep) 100%);
-      color:#fff; padding: 22px; border-radius: 16px; margin-bottom: 16px;
+      color:#fff; padding: var(--sp-5); border-radius: var(--r-lg); margin-bottom: var(--gap);
       box-shadow: 0 5px 18px rgba(76,2,151,.35); position: relative; overflow: hidden;
     }
     .stats-box::after { content:'📊'; position:absolute; right:12px; bottom:-8px; font-size:70px; opacity:.15; }
     .stats-box .big { font-family:'Anton',sans-serif; font-size: 2.8rem; line-height:1; }
     .stats-box .label { font-size:.72rem; opacity:.95; text-transform:uppercase; letter-spacing:2px; font-weight:800; }
 
-    .chip-row { margin-bottom: 14px; }
+    .chip-row { margin-bottom: var(--sp-3); }
     .chip {
       display:inline-block; background: var(--lfi-violet-soft); color:#3a2360; padding:5px 12px; border-radius:20px;
       font-size:.76rem; font-weight:700; margin:2px; border:1px solid #d3c9e8;
@@ -255,7 +260,7 @@
     .charts-wrap { margin-bottom: 18px; }
     .charts-wrap:empty { display: none; }
     .chart-card {
-      border:1px solid var(--lfi-border); border-radius:14px; padding:16px; margin-bottom:14px; background:#fff;
+      border:1px solid var(--lfi-border); border-radius:14px; padding: var(--sp-4); margin-bottom: var(--sp-3); background:#fff;
     }
     .chart-title { font-weight:800; font-size:.9rem; margin-bottom:12px; color:var(--lfi-black); }
     .donut-wrap { display:flex; align-items:center; gap:22px; flex-wrap:wrap; }
@@ -278,41 +283,31 @@
     /* ===== CONSEILS (fiches pratiques LFI) ===== */
     .guide-intro {
       background: var(--lfi-violet-soft); border:1px solid #d3c9e8; border-left:5px solid var(--lfi-violet);
-      border-radius: 12px; padding: 14px 16px; font-size:.86rem; line-height:1.5; margin-bottom:16px; color:#3a2360;
+      border-radius: var(--r-md); padding: var(--sp-3) var(--sp-4); font-size:.86rem; line-height:1.5; margin-bottom: var(--gap); color:#3a2360;
     }
-    .accordion { border:1px solid var(--lfi-border); border-radius:14px; overflow:hidden; margin-bottom:10px; background:#fff; }
+    .accordion { border:1px solid var(--lfi-border); border-radius:14px; overflow:hidden; margin-bottom: var(--sp-2); background:#fff; }
     .accordion > summary {
-      list-style:none; cursor:pointer; padding:15px 16px; font-weight:800; font-size:.92rem;
-      display:flex; align-items:center; gap:10px; background:#fff; color:var(--lfi-black);
+      list-style:none; cursor:pointer; padding: var(--sp-4); font-weight:800; font-size:.92rem;
+      display:flex; align-items:center; gap: var(--sp-2); background:#fff; color:var(--lfi-black);
     }
     .accordion > summary::-webkit-details-marker { display:none; }
     .accordion > summary::after { content:'▾'; margin-left:auto; font-size:1.1rem; color:var(--lfi-red); transition:transform .2s; }
     .accordion[open] > summary::after { transform:rotate(180deg); }
     .accordion[open] > summary { background: var(--lfi-cream); border-bottom:1px solid var(--lfi-border); }
-    .accordion .acc-body { padding: 14px 16px 18px; font-size:.86rem; line-height:1.55; color:#2b2b33; }
-    .accordion .acc-body ul { margin:8px 0 8px 18px; }
-    .accordion .acc-body li { margin-bottom:7px; }
-    .accordion .acc-body p { margin: 8px 0; }
+    .accordion .acc-body { padding: var(--sp-4); font-size:.86rem; line-height:1.55; color:#2b2b33; }
+    .accordion .acc-body ul { margin: var(--sp-2) 0 var(--sp-2) 18px; }
+    .accordion .acc-body li { margin-bottom: 7px; }
+    .accordion .acc-body p { margin: var(--sp-2) 0; }
     .quote {
       background:#fff; border-left:4px solid var(--lfi-red); border-radius:8px;
-      padding:10px 13px; margin:10px 0; font-style:italic; color:#3a2360; font-size:.85rem;
+      padding: var(--sp-3); margin: var(--sp-3) 0; font-style:italic; color:#3a2360; font-size:.85rem;
       box-shadow: 0 1px 4px rgba(0,0,0,.04);
     }
-    .warn { background:#fff6e5; border-left:4px solid var(--lfi-or, #F2C230); border-radius:8px; padding:10px 13px; margin:10px 0; font-size:.83rem; }
-    .objection { border-top:1px dashed var(--lfi-border); padding-top:12px; margin-top:12px; }
+    .warn { background:#fff6e5; border-left:4px solid var(--lfi-or, #F2C230); border-radius:8px; padding: var(--sp-3); margin: var(--sp-3) 0; font-size:.83rem; }
+    .objection { border-top:1px dashed var(--lfi-border); padding-top: var(--sp-3); margin-top: var(--sp-3); }
     .objection:first-of-type { border-top:none; margin-top:0; padding-top:0; }
     .objection .obj-q { font-weight:800; color:var(--lfi-violet-deep); display:block; margin-bottom:4px; }
     .obj-a { color:#33333a; }
-
-    /* 📇 Bloc prise de contact (Action Populaire) */
-    .contact-box { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin: 14px 0 4px;
-      padding: 12px 14px; background: var(--lfi-violet-soft); border: 1px solid rgba(76,2,151,.25); border-radius: 12px; }
-    .contact-box b { color: var(--lfi-violet-deep); font-size: .9rem; }
-    a.btn.small.contact-btn { background: var(--lfi-violet); color: var(--lfi-white) !important; text-decoration: none; border-color: var(--lfi-violet); white-space: nowrap; }
-    a.btn.small.contact-btn:hover { background: var(--lfi-violet-deep); }
-    .contact-toggle { display: flex; align-items: center; gap: 8px; font-size: .82rem; color: var(--lfi-violet-deep); cursor: pointer; user-select: none; }
-    .contact-toggle input { width: 18px; height: 18px; accent-color: var(--lfi-violet); }
-    .contact-fields { margin: 0 0 4px; padding: 12px 14px; background: var(--lfi-violet-soft); border: 1px dashed rgba(76,2,151,.35); border-radius: 12px; }
 
     /* 📱 Popup d'installation PWA */
     .pwa-banner { position: fixed; left: 12px; right: 12px; bottom: 12px; z-index: 9999;
@@ -343,8 +338,8 @@
     a.btn.secondary.small:hover { background: var(--lfi-violet-deep); color: var(--lfi-white) !important; }
 
     /* 🔌 Badge de synchronisation (offline-first) */
-    .sync-badge { display: flex; align-items: center; gap: 8px; padding: 9px 13px; border-radius: 11px;
-      font-size: .78rem; font-weight: 700; margin-bottom: 14px; border: 1px solid transparent; }
+    .sync-badge { display: flex; align-items: center; gap: var(--sp-2); padding: var(--sp-2) var(--sp-3); border-radius: 11px;
+      font-size: .78rem; font-weight: 700; margin-bottom: var(--sp-3); border: 1px solid transparent; }
     .sync-badge.ok { background: #e5f4e8; color: #23704a; border-color: #bfe3c8; }
     .sync-badge.pending { background: #fff6e5; color: #8a6100; border-color: #f2dfae; }
     .sync-badge.offline { background: var(--lfi-red-soft); color: #c62828; border-color: #f3c4c0; }
@@ -352,7 +347,7 @@
     @keyframes spin { to { transform: rotate(360deg); } }
     .sync-badge .retry-link { margin-left: auto; background: none; border: none; color: inherit; font-weight: 800; text-decoration: underline; cursor: pointer; font-size: .78rem; }
 
-    .footer-note { text-align: center; font-size: .74rem; color: #a09b92; padding: 18px 10px; }
+    .footer-note { text-align: center; font-size: .74rem; color: #a09b92; padding: var(--sp-5) var(--sp-3); }
     .footer-note .lock { color: var(--lfi-red); font-weight: 700; }
     .muted { color: #8a857c; font-size: .85rem; line-height:1.45; }
     .hidden { display: none !important; }
@@ -466,21 +461,16 @@
           <label>Interaction</label>
           <div class="interactions" id="interactionsBox"></div>
 
-          <!-- 📇 Prise de contact : n'apparaît QU'APRÈS une interaction positive.
-               L'étage/le n° de porte (données rattachables à une personne) sont réservés à ce cas. -->
+          <!-- 📇 Prise de contact : le bandeau (consentement + ✕) ne s'affiche QU'APRÈS une interaction positive.
+               À la coche, il révèle le lien Action Populaire + étage/porte (données rattachables à une personne). -->
           <div class="contact-prompt hidden" id="contactPrompt">
-            <span>🔔 Quelqu'un vous a donné ses coordonnées ?</span>
-            <button type="button" class="btn small violet" onclick="openContact()">📇 Noter le contact</button>
+            <label class="contact-consent">
+              <input type="checkbox" id="contactConsent" onchange="toggleContact()">
+              <span>📇 La personne accepte d'être recontactée</span>
+            </label>
+            <button type="button" class="contact-x" onclick="dismissContact()" aria-label="Ignorer">✕</button>
           </div>
           <div class="contact-fields hidden" id="contactFields">
-            <div class="contact-head">
-              <b>📇 Prise de contact</b>
-              <button type="button" class="contact-x" onclick="closeContact()" aria-label="Fermer">✕</button>
-            </div>
-            <label class="contact-consent">
-              <input type="checkbox" id="contactConsent">
-              <span>La personne a accepté d'être recontactée</span>
-            </label>
             <a class="btn small contact-btn full" href="https://actionpopulaire.fr/contacts/creer/" target="_blank" rel="noopener">➕ Créer le contact (Action Populaire)</a>
             <label style="margin-top:12px">Pour la retrouver plus tard (optionnel)</label>
             <div class="row">
@@ -944,21 +934,23 @@
           el.classList.add('selected'); state.selectedInteraction = i.id;
           // 📇 On ne propose la prise de contact que sur une interaction positive.
           const pos = POSITIVE_INTERACTIONS.includes(i.id);
-          document.getElementById('contactPrompt').classList.toggle('hidden', !pos);
-          if (!pos) closeContact();
+          if (pos) { document.getElementById('contactPrompt').classList.remove('hidden'); }
+          else { dismissContact(); }
         };
         box.appendChild(el);
       });
     }
 
-    // 📇 Ouvre la section de prise de contact (bouton du bandeau contextuel).
-    function openContact() {
-      document.getElementById('contactPrompt').classList.add('hidden');
+    // 📇 Le bandeau se transforme en section détaillée quand on coche « accepte d'être recontactée ».
+    function toggleContact() {
+      const on = document.getElementById('contactConsent').checked;
       const f = document.getElementById('contactFields');
-      f.classList.remove('hidden');
-      try { f.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } catch (e) {}
+      f.classList.toggle('hidden', !on);
+      if (on) { try { f.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } catch (e) {} }
     }
-    function closeContact() {
+    // ✕ : on ignore la prise de contact pour cette porte (bandeau + section refermés).
+    function dismissContact() {
+      document.getElementById('contactPrompt').classList.add('hidden');
       document.getElementById('contactFields').classList.add('hidden');
       const c = document.getElementById('contactConsent'); if (c) c.checked = false;
     }
@@ -1096,8 +1088,7 @@
       state.selectedInteraction = null;
       renderInteractions();
       // On referme la prise de contact (réinitialisée à chaque porte).
-      closeContact();
-      const p = document.getElementById('contactPrompt'); if (p) p.classList.add('hidden');
+      dismissContact();
     }
 
     async function loadCompil() {
