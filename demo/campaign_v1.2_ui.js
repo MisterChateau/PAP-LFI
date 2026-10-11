@@ -26,11 +26,11 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
   const home = await fetch(BASE + '/');
   const html = await home.text();
   ok('GET / → 200', home.status === 200, `status ${home.status}`);
-  ok('Version déployée = 2026-10-11.4', html.includes("APP_VERSION = '2026-10-11.4'"));
+  ok('Version déployée = 2026-10-11.7', html.includes("APP_VERSION = '2026-10-11.7'"));
   ok('Front contient contactPrompt', html.includes('contactPrompt'));
   ok('Front contient toggleContact/dismissContact', html.includes('toggleContact') && html.includes('dismissContact'));
   ok('Front contient lastCompilDoors (fix CSV)', html.includes('lastCompilDoors'));
-  ok('Front contient le fix token/reload SW', html.includes('pap_pending_token') && html.includes('hadController'));
+  ok('Front contient le fix F5/SW (pap_current_action + hadController)', html.includes('pap_current_action') && html.includes('hadController'));
 
   // Action A (aucun contact) et Action B (avec contact)
   const mk = (name) => fetch(BASE + '/api/actions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name }) }).then(r => r.json());
@@ -82,6 +82,13 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
   ok('GPS inline (.gps-inline) présent', await ev("!!document.querySelector('.gps-inline')"));
   ok('Ancien .gps-btn supprimé', (await ev("document.querySelectorAll('.gps-btn').length")) === 0);
   ok('GPS inline dans le champ Rue (.input-group)', await ev("!!document.querySelector('.input-group .gps-inline')"));
+
+  // F5 / rafraîchissement : on doit rester dans l'action (pas revenir à l'accueil)
+  await Page.reload();
+  await Page.loadEventFired();
+  await waitFor("typeof state!=='undefined' && !!state.actionId && document.getElementById('interactionsBox') && document.getElementById('interactionsBox').children.length>0", 25000);
+  ok('F5 : on reste dans l\'action (pas de retour accueil)', (await ev("document.getElementById('actionBarName').textContent")).includes('TEST v1.2 B'), await ev("document.getElementById('actionBarName').textContent"));
+  ok('F5 : URL sans token (pathname = /)', (await ev('location.pathname')) === '/');
 
   console.log('\n--- 2) Bandeau de contact contextuel ---');
   await clickInteraction('refus');

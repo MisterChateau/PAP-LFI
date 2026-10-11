@@ -682,7 +682,7 @@
   <script>
     // 🔖 Version du front (affichée discrètement) — permet de vérifier d'un coup d'œil
     // que le téléphone a bien rechargé la dernière version après un déploiement.
-    const APP_VERSION = '2026-10-11.6';
+    const APP_VERSION = '2026-10-11.7';
     const INTERACTIONS = [
       { id: 'pas-reponse', label: '📬 Pas de réponse' },
       { id: 'sympa', label: '😊 Sympathique' },
@@ -809,6 +809,7 @@
 
     function exitAction() {
       state.actionId = null; state.cipherKey = ''; state.actionName = ''; state.selectedInteraction = null;
+      try { sessionStorage.removeItem('pap_current_action'); } catch (e) {}
       document.getElementById('action-bar').classList.add('hidden');
       history.replaceState({}, '', '/');
       show('view-home');
@@ -861,10 +862,10 @@
     }
 
     async function openToken(token) {
-      // 🔄 Mémorise le token le temps d'un éventuel rechargement de MAJ du service worker.
-      try { sessionStorage.setItem('pap_pending_token', token);
-        setTimeout(() => { try { if (sessionStorage.getItem('pap_pending_token') === token) sessionStorage.removeItem('pap_pending_token'); } catch (e) {} }, 12000);
-      } catch (e) {}
+      // 💾 Mémorise l'action pour la session (onglet) — jamais dans l'URL. Permet à un
+      // rafraîchissement (F5) ou au rechargement de MAJ du service worker de rouvrir
+      // l'action au lieu de renvoyer le militant à l'accueil.
+      try { sessionStorage.setItem('pap_current_action', token); } catch (e) {}
       try {
         const r = await fetch(`/api/link/${encodeURIComponent(token)}`);
         const d = await r.json();
@@ -875,7 +876,10 @@
         // ni dans l'historique du navigateur.
         history.replaceState({}, '', '/');
         loadAction();
-      } catch (e) { alert('Lien invalide ou expiré : ' + e.message); show('view-home'); }
+      } catch (e) {
+        try { sessionStorage.removeItem('pap_current_action'); } catch (e2) {}
+        alert('Lien invalide ou expiré : ' + e.message); show('view-home');
+      }
     }
 
     async function fetchExport() {
@@ -1308,15 +1312,13 @@
       // Le rôle est ensuite déterminé par /api/link/:token, mais on accepte les 3 préfixes.
       const pathMatch = window.location.pathname.match(/^\/(?:r|a|g)\/([^/]+)$/);
       if (pathMatch) {
-        try { sessionStorage.removeItem('pap_pending_token'); } catch (e) {}
         openToken(decodeURIComponent(pathMatch[1]));
       } else {
-        // 🔄 Filet de sécurité : si un rechargement (mise à jour du service worker) a suivi
-        // l'ouverture d'un lien, le token est conservé brièvement → on rouvre l'action
-        // au lieu de renvoyer le militant à l'accueil (sinon il perdait son action).
-        let pend = null;
-        try { pend = sessionStorage.getItem('pap_pending_token'); } catch (e) {}
-        if (pend) { try { sessionStorage.removeItem('pap_pending_token'); } catch (e) {} openToken(pend); }
+        // 💾 Résilience au rafraîchissement (F5) : on rouvre l'action mémorisée pour la
+        // session (onglet) au lieu de renvoyer à l'accueil. Le token n'est PAS dans l'URL.
+        let saved = null;
+        try { saved = sessionStorage.getItem('pap_current_action'); } catch (e) {}
+        if (saved) openToken(saved);
         else { history.replaceState({}, '', '/'); show('view-home'); }
       }
     })();
