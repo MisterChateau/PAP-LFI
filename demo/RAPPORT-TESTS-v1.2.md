@@ -58,8 +58,14 @@ Refonte de la saisie terrain pour répondre au retour des militants (via le GA) 
 | `v1.2.3-spacing` | Bandeau de contact : marge basse manquante → label « Équipe » collé. |
 | `v1.2.4-numfield` | Champ « N° rue » trop large (50 %) → passé à ~26 % (classe `.num-field`) pour élargir la Rue. |
 | `v1.2.5-refresh` | **F5 / rafraîchissement perdait l'action** → action mémorisée en `sessionStorage` (par onglet), rouverte au reload, sans ré-exposer le token dans l'URL. (`exitAction` nettoie la mémoire de session.) |
+| `v1.2.6-pwa-update` | Vérification de MAJ du SW **au retour au premier plan** + checklist de livraison PWA (AGENTS.md). |
+| `v1.2.7-underline` | Les liens stylés en bouton (`a.btn`) ne sont plus soulignés. |
+| `v1.2.8-linkcapture` | Tentative de capture de lien PWA (`handle_links`). |
+| `v1.2.9-remove-linkcapture` | **Retrait** de la capture de lien (non fiable hors TWA/Android). |
+| `v1.2.10-persist-action` | Action mémorisée durablement (`localStorage`) → rouvrir l'appli installée ramène dans la dernière action. |
+| `v1.2.11-access-link` | Accueil : bloc **« Accéder à l'action »** (coller un lien) **visible seulement si la PWA est installée** — parade au fait qu'un lien externe ne peut pas ouvrir la PWA sans TWA. |
 
-Ajout de 2 tests E2E : « F5 → on reste dans l'action » et « F5 → URL sans token ». **Total campagne : 39/39 OK.**
+Ajout de 2 tests E2E : « F5 → on reste dans l'action » et « F5 → URL sans token ». **Total campagne : 42/42 OK.**
 
 ## Hygiène des données
 
