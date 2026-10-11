@@ -5,7 +5,7 @@
    🔄 Bumper CACHE_VERSION à chaque mise à jour du front : l'ancien cache est
    supprimé à l'activation, ce qui force les téléphones à reprendre le code neuf. */
 
-const CACHE_VERSION = 'v2026-10-11d';   // ⬅️ incrémenter à chaque livraison de front
+const CACHE_VERSION = 'v2026-10-11e';   // ⬅️ incrémenter à chaque livraison de front
 const CACHE = 'pap-lfi-' + CACHE_VERSION;
 const SHELL = [
   '/',

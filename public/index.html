@@ -126,6 +126,7 @@
     }
     input:focus, select:focus, textarea:focus { border-color: var(--lfi-red); outline: none; background: #fff; }
     textarea { min-height: 66px; resize: vertical; }
+    .row > .num-field { flex: 0 0 26%; max-width: 104px; }
     .row { display: flex; gap: var(--sp-3); }
     .row > div { flex: 1; min-width: 0; }
 
@@ -154,7 +155,7 @@
     .input-group { display: flex; align-items: stretch; }
     .input-group input { flex: 1 1 auto; min-width: 0; border-top-right-radius: 0; border-bottom-right-radius: 0; }
     .gps-inline { flex: 0 0 auto; border: 2px solid var(--lfi-border); border-left: none; background: var(--lfi-cream);
-      color: var(--lfi-violet-deep); font-size: 1.15rem; padding: 0 var(--sp-3); cursor: pointer; margin-bottom: var(--gap);
+      color: var(--lfi-violet-deep); font-size: 1.05rem; padding: 0 11px; cursor: pointer; margin-bottom: var(--gap);
       border-top-right-radius: var(--r-md); border-bottom-right-radius: var(--r-md); transition: background .15s; }
     .gps-inline:hover { background: var(--lfi-violet-soft); }
     .gps-inline:disabled { opacity: .5; cursor: progress; }
@@ -446,7 +447,7 @@
           <div class="status" id="status"></div>
           <h2>🚪 Nouvelle porte</h2>
           <div class="row">
-            <div>
+            <div class="num-field">
               <label>N° rue <span style="color:var(--lfi-red)">*</span></label>
               <input type="text" id="streetNumber" placeholder="Ex : 12" inputmode="numeric">
             </div>
@@ -681,7 +682,7 @@
   <script>
     // 🔖 Version du front (affichée discrètement) — permet de vérifier d'un coup d'œil
     // que le téléphone a bien rechargé la dernière version après un déploiement.
-    const APP_VERSION = '2026-10-11.5';
+    const APP_VERSION = '2026-10-11.6';
     const INTERACTIONS = [
       { id: 'pas-reponse', label: '📬 Pas de réponse' },
       { id: 'sympa', label: '😊 Sympathique' },
