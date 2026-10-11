@@ -51,6 +51,16 @@ Refonte de la saisie terrain pour répondre au retour des militants (via le GA) 
 
 ---
 
+## Correctifs UX post-déploiement (retours Chapi en direct)
+
+| Tag | Fix |
+|-----|-----|
+| `v1.2.3-spacing` | Bandeau de contact : marge basse manquante → label « Équipe » collé. |
+| `v1.2.4-numfield` | Champ « N° rue » trop large (50 %) → passé à ~26 % (classe `.num-field`) pour élargir la Rue. |
+| `v1.2.5-refresh` | **F5 / rafraîchissement perdait l'action** → action mémorisée en `sessionStorage` (par onglet), rouverte au reload, sans ré-exposer le token dans l'URL. (`exitAction` nettoie la mémoire de session.) |
+
+Ajout de 2 tests E2E : « F5 → on reste dans l'action » et « F5 → URL sans token ». **Total campagne : 39/39 OK.**
+
 ## Hygiène des données
 
 Les actions créées pour les tests (`TEST v1.2 A/B`, `DEBUG`, `REPRO`) ont été **purgées** en fin de campagne via `POST /api/actions/:id/purge` (droit à l'effacement).
