@@ -681,7 +681,7 @@
   <script>
     // 🔖 Version du front (affichée discrètement) — permet de vérifier d'un coup d'œil
     // que le téléphone a bien rechargé la dernière version après un déploiement.
-    const APP_VERSION = '2026-10-11.3';
+    const APP_VERSION = '2026-10-11.4';
     const INTERACTIONS = [
       { id: 'pas-reponse', label: '📬 Pas de réponse' },
       { id: 'sympa', label: '😊 Sympathique' },
@@ -860,6 +860,10 @@
     }
 
     async function openToken(token) {
+      // 🔄 Mémorise le token le temps d'un éventuel rechargement de MAJ du service worker.
+      try { sessionStorage.setItem('pap_pending_token', token);
+        setTimeout(() => { try { if (sessionStorage.getItem('pap_pending_token') === token) sessionStorage.removeItem('pap_pending_token'); } catch (e) {} }, 12000);
+      } catch (e) {}
       try {
         const r = await fetch(`/api/link/${encodeURIComponent(token)}`);
         const d = await r.json();
@@ -1302,8 +1306,18 @@
       // 📎 Liens courts : /r/<code> (participant), /a/<code> (animateur), /g/<code> (GA).
       // Le rôle est ensuite déterminé par /api/link/:token, mais on accepte les 3 préfixes.
       const pathMatch = window.location.pathname.match(/^\/(?:r|a|g)\/([^/]+)$/);
-      if (pathMatch) openToken(decodeURIComponent(pathMatch[1]));
-      else { history.replaceState({}, '', '/'); show('view-home'); }
+      if (pathMatch) {
+        try { sessionStorage.removeItem('pap_pending_token'); } catch (e) {}
+        openToken(decodeURIComponent(pathMatch[1]));
+      } else {
+        // 🔄 Filet de sécurité : si un rechargement (mise à jour du service worker) a suivi
+        // l'ouverture d'un lien, le token est conservé brièvement → on rouvre l'action
+        // au lieu de renvoyer le militant à l'accueil (sinon il perdait son action).
+        let pend = null;
+        try { pend = sessionStorage.getItem('pap_pending_token'); } catch (e) {}
+        if (pend) { try { sessionStorage.removeItem('pap_pending_token'); } catch (e) {} openToken(pend); }
+        else { history.replaceState({}, '', '/'); show('view-home'); }
+      }
     })();
 
     /* ============ 📱 PWA : installation sur l'écran d'accueil ============ */
@@ -1371,12 +1385,16 @@
     // sans que le militant ait à réinstaller la PWA.
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
+        // ⚠️ On ne recharge QUE s'il y avait déjà un contrôleur (vraie mise à jour).
+        // Sinon (1re visite / après désenregistrement), le recharger ferait perdre
+        // le lien d'action en cours (l'URL a déjà été nettoyée par replaceState).
+        const hadController = !!navigator.serviceWorker.controller;
         navigator.serviceWorker.register('/sw.js').then((reg) => {
           reg.addEventListener('updatefound', () => {
             const nw = reg.installing;
             if (!nw) return;
             nw.addEventListener('statechange', () => {
-              if (nw.state === 'activated' && navigator.serviceWorker.controller) {
+              if (nw.state === 'activated' && hadController && navigator.serviceWorker.controller) {
                 // Une nouvelle version vient d'être activée → on recharge une fois.
                 location.reload();
               }
