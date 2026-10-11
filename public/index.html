@@ -685,7 +685,7 @@
   <script>
     // 🔖 Version du front (affichée discrètement) — permet de vérifier d'un coup d'œil
     // que le téléphone a bien rechargé la dernière version après un déploiement.
-    const APP_VERSION = '2026-10-11.11';
+    const APP_VERSION = '2026-10-11.12';
     const INTERACTIONS = [
       { id: 'pas-reponse', label: '📬 Pas de réponse' },
       { id: 'sympa', label: '😊 Sympathique' },
@@ -812,7 +812,7 @@
 
     function exitAction() {
       state.actionId = null; state.cipherKey = ''; state.actionName = ''; state.selectedInteraction = null;
-      try { sessionStorage.removeItem('pap_current_action'); } catch (e) {}
+      try { localStorage.removeItem('pap_current_action'); } catch (e) {}
       document.getElementById('action-bar').classList.add('hidden');
       history.replaceState({}, '', '/');
       show('view-home');
@@ -865,10 +865,10 @@
     }
 
     async function openToken(token) {
-      // 💾 Mémorise l'action pour la session (onglet) — jamais dans l'URL. Permet à un
-      // rafraîchissement (F5) ou au rechargement de MAJ du service worker de rouvrir
-      // l'action au lieu de renvoyer le militant à l'accueil.
-      try { sessionStorage.setItem('pap_current_action', token); } catch (e) {}
+      // 💾 Mémorise l'action de façon PERSISTANTE (localStorage) — jamais dans l'URL.
+      // Un F5, le rechargement de MAJ du service worker, ou la réouverture de l'appli
+      // installée rouvrent l'action. Effacé par « ✕ Exit ».
+      try { localStorage.setItem('pap_current_action', token); } catch (e) {}
       try {
         const r = await fetch(`/api/link/${encodeURIComponent(token)}`);
         const d = await r.json();
@@ -880,7 +880,7 @@
         history.replaceState({}, '', '/');
         loadAction();
       } catch (e) {
-        try { sessionStorage.removeItem('pap_current_action'); } catch (e2) {}
+        try { localStorage.removeItem('pap_current_action'); } catch (e2) {}
         alert('Lien invalide ou expiré : ' + e.message); show('view-home');
       }
     }
@@ -1317,10 +1317,11 @@
       if (pathMatch) {
         openToken(decodeURIComponent(pathMatch[1]));
       } else {
-        // 💾 Résilience au rafraîchissement (F5) : on rouvre l'action mémorisée pour la
-        // session (onglet) au lieu de renvoyer à l'accueil. Le token n'est PAS dans l'URL.
+        // 💾 Résilience : on rouvre l'action mémorisée (persistant) au lieu de renvoyer
+        // à l'accueil. Permet à l'appli INSTALLÉE de rouvrir la dernière action en tapant
+        // l'icône (sans recliquer un lien), et à un F5 de rester dans l'action.
         let saved = null;
-        try { saved = sessionStorage.getItem('pap_current_action'); } catch (e) {}
+        try { saved = localStorage.getItem('pap_current_action'); } catch (e) {}
         if (saved) openToken(saved);
         else { history.replaceState({}, '', '/'); show('view-home'); }
       }

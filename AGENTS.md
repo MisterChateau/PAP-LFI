@@ -152,8 +152,8 @@ Ce qui est **déjà géré automatiquement** (ne pas casser) :
 - HTML en `no-store` + **réseau d'abord** dans le `fetch` du SW.
 - `skipWaiting()` + `clients.claim()` → nouvelle version active immédiatement.
 - Reload auto **uniquement s'il y avait déjà un contrôleur** (vraie MAJ) + vérif au retour au premier plan.
-- L'action en cours est mémorisée en `sessionStorage` (par onglet) → un F5 ou le reload de MAJ
-  **rouvre l'action** au lieu de renvoyer à l'accueil (jamais de token dans l'URL).
+- L'action en cours est mémorisée en `localStorage` (persistant, effacé par « ✕ Exit ») → un F5,
+  le reload de MAJ, ou la **réouverture de l'appli installée** rouvrent l'action (jamais de token dans l'URL).
 
 > Vérif post-déploiement : `curl -s https://pap-lfi.onrender.com/ | grep APP_VERSION` doit
 > afficher la nouvelle version.
