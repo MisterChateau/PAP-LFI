@@ -288,6 +288,9 @@
     .contact-box b { color: var(--lfi-violet-deep); font-size: .9rem; }
     a.btn.small.contact-btn { background: var(--lfi-violet); color: var(--lfi-white) !important; text-decoration: none; border-color: var(--lfi-violet); white-space: nowrap; }
     a.btn.small.contact-btn:hover { background: var(--lfi-violet-deep); }
+    .contact-toggle { display: flex; align-items: center; gap: 8px; font-size: .82rem; color: var(--lfi-violet-deep); cursor: pointer; user-select: none; }
+    .contact-toggle input { width: 18px; height: 18px; accent-color: var(--lfi-violet); }
+    .contact-fields { margin: 0 0 4px; padding: 12px 14px; background: var(--lfi-violet-soft); border: 1px dashed rgba(76,2,151,.35); border-radius: 12px; }
 
     /* 📱 Popup d'installation PWA */
     .pwa-banner { position: fixed; left: 12px; right: 12px; bottom: 12px; z-index: 9999;
@@ -436,30 +439,38 @@
             </div>
           </div>
           <button type="button" class="btn secondary small gps-btn" id="gpsBtn" onclick="fillFromGPS()">📍 Utiliser ma position</button>
-          <div class="row">
-            <div>
-              <label>Étage</label>
-              <input type="text" id="floor" placeholder="Ex : 3" inputmode="numeric">
-            </div>
-            <div>
-              <label>N° porte</label>
-              <input type="text" id="doorNumber" placeholder="Ex : 12 ou B">
-            </div>
-          </div>
           <label>Interaction</label>
           <div class="interactions" id="interactionsBox"></div>
           <label>Équipe (optionnel — suivi)</label>
           <input type="text" id="team" placeholder="Ex : A3, B1..." autocomplete="off">
           <label>Détails / notes (optionnel)</label>
-          <textarea id="details" placeholder="Infos complémentaires..."></textarea>
+          <textarea id="details" placeholder="Infos matérielles uniquement (logement, propreté, transports...). Pas de nom ni de données personnelles."></textarea>
 
-          <!-- 📇 Prise de contact : lien direct vers la fiche Action Populaire -->
+          <!-- 📇 Prise de contact : n'apparaît QUE si la personne accepte d'être recontactée.
+               L'étage/le n° de porte (données rattachables à une personne) sont réservés à ce cas. -->
           <div class="contact-box">
             <div style="flex:1;min-width:180px">
               <b>📇 Prise de contact ?</b>
               <p class="muted" style="font-size:.8rem;margin:4px 0 0">Enregistrez la personne (nom, tél, mail) sur Action Populaire.</p>
             </div>
+            <label class="contact-toggle">
+              <input type="checkbox" id="contactToggle" onchange="toggleContactFields()">
+              <span>La personne accepte d'être recontactée</span>
+            </label>
             <a class="btn small contact-btn" href="https://actionpopulaire.fr/contacts/creer/" target="_blank" rel="noopener">➕ Créer le contact</a>
+          </div>
+          <div class="contact-fields hidden" id="contactFields">
+            <p class="muted" style="font-size:.78rem;margin:0 0 8px">Utile pour retrouver la personne (elle a donné son accord).</p>
+            <div class="row">
+              <div>
+                <label>Étage</label>
+                <input type="text" id="floor" placeholder="Ex : 3" inputmode="numeric">
+              </div>
+              <div>
+                <label>N° porte</label>
+                <input type="text" id="doorNumber" placeholder="Ex : 12 ou B">
+              </div>
+            </div>
           </div>
 
           <button class="btn" onclick="submitDoor()">💾 Enregistrer</button>
@@ -653,7 +664,7 @@
   <script>
     // 🔖 Version du front (affichée discrètement) — permet de vérifier d'un coup d'œil
     // que le téléphone a bien rechargé la dernière version après un déploiement.
-    const APP_VERSION = '2026-10-04.1';
+    const APP_VERSION = '2026-10-11.1';
     const INTERACTIONS = [
       { id: 'pas-reponse', label: '📬 Pas de réponse' },
       { id: 'sympa', label: '😊 Sympathique' },
@@ -1015,10 +1026,21 @@
     // (on monte les étages dans le même immeuble → seul le n° de porte change).
     function clearFormKeepStreet() {
       document.getElementById('doorNumber').value = '';
+      document.getElementById('floor').value = '';
       document.getElementById('details').value = '';
       state.selectedInteraction = null;
       renderInteractions();
-      document.getElementById('doorNumber').focus(); // on enchaîne direct au clavier
+      // On referme la section contact (réinitialisée à chaque porte).
+      const ct = document.getElementById('contactToggle');
+      if (ct) { ct.checked = false; }
+      document.getElementById('contactFields').classList.add('hidden');
+    }
+
+    // 📇 Affiche/masque les champs étage + n° de porte (réservés à la prise de contact).
+    function toggleContactFields() {
+      const on = document.getElementById('contactToggle').checked;
+      document.getElementById('contactFields').classList.toggle('hidden', !on);
+      if (on) document.getElementById('floor').focus();
     }
 
     async function loadCompil() {
