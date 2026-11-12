@@ -483,7 +483,7 @@
           <div class="interactions" id="interactionsBox"></div>
 
           <!-- 📇 Prise de contact : le bandeau (consentement + ✕) ne s'affiche QU'APRÈS une interaction positive.
-               À la coche, il révèle le lien Action Populaire + étage/porte (données rattachables à une personne). -->
+               À la coche, il révèle le lien Action Populaire. Simplifié le 12/11 : plus d'étage ni de n° de porte. -->
           <div class="contact-prompt hidden" id="contactPrompt">
             <label class="contact-consent">
               <input type="checkbox" id="contactConsent" onchange="toggleContact()">
@@ -493,17 +493,6 @@
           </div>
           <div class="contact-fields hidden" id="contactFields">
             <a class="btn small contact-btn full" href="https://actionpopulaire.fr/contacts/creer/" target="_blank" rel="noopener">➕ Créer le contact (Action Populaire)</a>
-            <label style="margin-top:12px">Pour la retrouver plus tard (optionnel)</label>
-            <div class="row">
-              <div>
-                <label>Étage</label>
-                <input type="text" id="floor" placeholder="Ex : 3" inputmode="numeric">
-              </div>
-              <div>
-                <label>N° porte</label>
-                <input type="text" id="doorNumber" placeholder="Ex : 12 ou B">
-              </div>
-            </div>
           </div>
 
           <label>Équipe (optionnel — suivi)</label>
@@ -529,7 +518,7 @@
           <div class="table-wrap" id="compilTableWrap">
             <table id="compilTable">
               <thead>
-                <tr><th>Rue</th><th>N°</th><th>Étage</th><th>N° porte</th><th>Interaction</th><th>Détails</th><th>Équipe</th><th>Heure</th></tr>
+                <tr><th>Rue</th><th>N°</th><th>Interaction</th><th>Détails</th><th>Équipe</th><th>Heure</th></tr>
               </thead>
               <tbody></tbody>
             </table>
@@ -702,7 +691,7 @@
   <script>
     // 🔖 Version du front (affichée discrètement) — permet de vérifier d'un coup d'œil
     // que le téléphone a bien rechargé la dernière version après un déploiement.
-    const APP_VERSION = '2026-11-12.14';
+    const APP_VERSION = '2026-11-12.15';
     const INTERACTIONS = [
       { id: 'pas-reponse', label: '📬 Pas de réponse' },
       { id: 'sympa', label: '😊 Sympathique' },
@@ -988,7 +977,7 @@
       // 📌 On ne vide PAS la rue : elle est restaurée depuis la dernière saisie
       // (un rechargement de la PWA ne doit pas faire perdre l'adresse en cours,
       // ni la remplacer par la position GPS courante).
-      ['floor','doorNumber','team','details'].forEach(id => { const el = document.getElementById(id); if (el) el.value=''; });
+      ['team','details'].forEach(id => { const el = document.getElementById(id); if (el) el.value=''; });
       restoreLastAddress();
       hideStatus(); renderInteractions(); updateCounter();
       updateSyncBadge();
@@ -1155,8 +1144,9 @@
     async function submitDoor() {
       // 📇 L'étage/le n° de porte ne sont enregistrés QUE si la personne a donné son accord.
       const consent = !!(document.getElementById('contactConsent') || {}).checked;
-      const floor = consent ? document.getElementById('floor').value.trim() : '';
-      const doorNumber = consent ? document.getElementById('doorNumber').value.trim() : '';
+      // 📌 Simplifié : plus de saisie étage / n° de porte (12/11/2026)
+      const floor = '';
+      const doorNumber = '';
       const streetNumber = document.getElementById('streetNumber').value.trim();
       const street = document.getElementById('street').value.trim();
       const details = document.getElementById('details').value.trim();
@@ -1186,8 +1176,6 @@
     // 🧹 Vide la porte + les détails, mais GARDE le n° de rue, la rue ET l'étage
     // (on monte les étages dans le même immeuble → seul le n° de porte change).
     function clearFormKeepStreet() {
-      document.getElementById('doorNumber').value = '';
-      document.getElementById('floor').value = '';
       document.getElementById('details').value = '';
       state.selectedInteraction = null;
       renderInteractions();
@@ -1255,17 +1243,13 @@
           return new Date(a.createdAt || 0) - new Date(b.createdAt || 0);
         });
         lastCompilDoors = sorted; // 📄 pour l'export CSV (toujours complet)
-        // 🧩 Colonnes ADAPTATIVES : on masque les colonnes vides (ex. Étage/N° porte quand
-        // aucune prise de contact) → pas de colonnes fantômes, moins de scroll horizontal.
+        // 🧩 Colonnes ADAPTATIVES : on masque les colonnes vides (ex. Détails/Équipe) → pas de colonnes fantômes.
         const nonEmpty = (v) => v != null && String(v).trim() !== '';
-        const hasFloorDoor = sorted.some(x => nonEmpty(x.floor) || nonEmpty(x.doorNumber));
         const hasDetails = sorted.some(x => nonEmpty(x.details));
         const hasTeam = sorted.some(x => nonEmpty(x.team));
         const COLS = [
           { key: 'street',  label: 'Rue',         on: true },
           { key: 'num',     label: 'N°',          on: true },
-          { key: 'floor',   label: 'Étage',       on: hasFloorDoor },
-          { key: 'door',    label: 'N° porte',    on: hasFloorDoor },
           { key: 'inter',   label: 'Interaction', on: true },
           { key: 'details', label: 'Détails',     on: hasDetails },
           { key: 'team',    label: 'Équipe',      on: hasTeam },
@@ -1278,7 +1262,7 @@
           const interLabel = (INTERACTIONS.find(i=>i.id===door.interaction)||{}).label || door.interaction || '';
           const addr = parseAddr(door.building);
           const cells = {
-            street: esc(addr.street), num: esc(addr.numRaw), floor: esc(door.floor), door: esc(door.doorNumber),
+            street: esc(addr.street), num: esc(addr.numRaw),
             inter: esc(interLabel), details: esc(door.details), team: esc(door.team),
             time: door.createdAt ? new Date(door.createdAt).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}) : ''
           };
@@ -1360,11 +1344,11 @@
         return m ? { numRaw: m[1], street: (m[2] || '').trim() } : { numRaw: '', street: s };
       };
       const cellCsv = (v) => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
-      let csv = 'Rue;N°;Étage;N° porte;Interaction;Détails;Équipe;Heure\n';
+      let csv = 'Rue;N°;Interaction;Détails;Équipe;Heure\n';
       rows.forEach(d => {
         const a = parseAddrCsv(d.building);
         const time = d.createdAt ? new Date(d.createdAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '';
-        csv += [a.street, a.numRaw, d.floor, d.doorNumber, interLabelCsv(d.interaction), d.details, d.team, time].map(cellCsv).join(';') + '\n';
+        csv += [a.street, a.numRaw, interLabelCsv(d.interaction), d.details, d.team, time].map(cellCsv).join(';') + '\n';
       });
       const blob = new Blob(['\uFEFF'+csv], { type: 'text/csv;charset=utf-8;' });
       const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download='pap-lfi-compilation.csv'; a.click();
