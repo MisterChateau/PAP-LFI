@@ -495,9 +495,7 @@
             <a class="btn small contact-btn full" href="https://actionpopulaire.fr/contacts/creer/" target="_blank" rel="noopener">➕ Créer le contact (Action Populaire)</a>
           </div>
 
-          <label>Équipe (optionnel — suivi)</label>
-          <input type="text" id="team" placeholder="Ex : A3, B1..." autocomplete="off">
-          <label>Détails / notes (optionnel)</label>
+          <label>Note (optionnel)</label>
           <textarea id="details" placeholder="Infos matérielles uniquement (logement, propreté, transports...). Pas de nom ni de données personnelles."></textarea>
 
           <button class="btn" onclick="submitDoor()">💾 Enregistrer</button>
@@ -518,7 +516,7 @@
           <div class="table-wrap" id="compilTableWrap">
             <table id="compilTable">
               <thead>
-                <tr><th>Rue</th><th>N°</th><th>Interaction</th><th>Détails</th><th>Équipe</th><th>Heure</th></tr>
+                <tr><th>Rue</th><th>N°</th><th>Interaction</th><th>Note</th><th>Heure</th></tr>
               </thead>
               <tbody></tbody>
             </table>
@@ -691,7 +689,7 @@
   <script>
     // 🔖 Version du front (affichée discrètement) — permet de vérifier d'un coup d'œil
     // que le téléphone a bien rechargé la dernière version après un déploiement.
-    const APP_VERSION = '2026-11-12.15';
+    const APP_VERSION = '2026-11-12.16';
     const INTERACTIONS = [
       { id: 'pas-reponse', label: '📬 Pas de réponse' },
       { id: 'sympa', label: '😊 Sympathique' },
@@ -977,7 +975,7 @@
       // 📌 On ne vide PAS la rue : elle est restaurée depuis la dernière saisie
       // (un rechargement de la PWA ne doit pas faire perdre l'adresse en cours,
       // ni la remplacer par la position GPS courante).
-      ['team','details'].forEach(id => { const el = document.getElementById(id); if (el) el.value=''; });
+      ['details'].forEach(id => { const el = document.getElementById(id); if (el) el.value=''; });
       restoreLastAddress();
       hideStatus(); renderInteractions(); updateCounter();
       updateSyncBadge();
@@ -1150,7 +1148,7 @@
       const streetNumber = document.getElementById('streetNumber').value.trim();
       const street = document.getElementById('street').value.trim();
       const details = document.getElementById('details').value.trim();
-      const team = document.getElementById('team').value.trim();
+      const team = null;
       const interaction = state.selectedInteraction;
       if (!streetNumber) { showStatus('error', 'Le N° de rue est obligatoire.'); return; }
       if (!street) { showStatus('error', 'La rue est obligatoire.'); return; }
@@ -1243,16 +1241,14 @@
           return new Date(a.createdAt || 0) - new Date(b.createdAt || 0);
         });
         lastCompilDoors = sorted; // 📄 pour l'export CSV (toujours complet)
-        // 🧩 Colonnes ADAPTATIVES : on masque les colonnes vides (ex. Détails/Équipe) → pas de colonnes fantômes.
+        // 🧩 Colonnes ADAPTATIVES : on masque la colonne Note quand elle est vide → pas de colonnes fantômes.
         const nonEmpty = (v) => v != null && String(v).trim() !== '';
         const hasDetails = sorted.some(x => nonEmpty(x.details));
-        const hasTeam = sorted.some(x => nonEmpty(x.team));
         const COLS = [
           { key: 'street',  label: 'Rue',         on: true },
           { key: 'num',     label: 'N°',          on: true },
           { key: 'inter',   label: 'Interaction', on: true },
-          { key: 'details', label: 'Détails',     on: hasDetails },
-          { key: 'team',    label: 'Équipe',      on: hasTeam },
+          { key: 'details', label: 'Note',        on: hasDetails },
           { key: 'time',    label: 'Heure',       on: true }
         ];
         document.querySelector('#compilTable thead tr').innerHTML = COLS.filter(c => c.on).map(c => `<th>${c.label}</th>`).join('');
@@ -1263,7 +1259,7 @@
           const addr = parseAddr(door.building);
           const cells = {
             street: esc(addr.street), num: esc(addr.numRaw),
-            inter: esc(interLabel), details: esc(door.details), team: esc(door.team),
+            inter: esc(interLabel), details: esc(door.details),
             time: door.createdAt ? new Date(door.createdAt).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}) : ''
           };
           tr.innerHTML = COLS.filter(c => c.on).map(c => `<td>${cells[c.key]}</td>`).join('');
@@ -1344,11 +1340,11 @@
         return m ? { numRaw: m[1], street: (m[2] || '').trim() } : { numRaw: '', street: s };
       };
       const cellCsv = (v) => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
-      let csv = 'Rue;N°;Interaction;Détails;Équipe;Heure\n';
+      let csv = 'Rue;N°;Interaction;Note;Heure\n';
       rows.forEach(d => {
         const a = parseAddrCsv(d.building);
         const time = d.createdAt ? new Date(d.createdAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '';
-        csv += [a.street, a.numRaw, interLabelCsv(d.interaction), d.details, d.team, time].map(cellCsv).join(';') + '\n';
+        csv += [a.street, a.numRaw, interLabelCsv(d.interaction), d.details, time].map(cellCsv).join(';') + '\n';
       });
       const blob = new Blob(['\uFEFF'+csv], { type: 'text/csv;charset=utf-8;' });
       const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download='pap-lfi-compilation.csv'; a.click();
