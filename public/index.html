@@ -469,12 +469,12 @@
           <div class="row">
             <div class="num-field">
               <label>N° rue <span style="color:var(--lfi-red)">*</span></label>
-              <input type="text" id="streetNumber" placeholder="Ex : 12" inputmode="numeric">
+              <input type="text" id="streetNumber" placeholder="Ex : 12" inputmode="numeric" oninput="saveLastAddress()">
             </div>
             <div>
               <label>Rue <span style="color:var(--lfi-red)">*</span></label>
               <div class="input-group">
-                <input type="text" id="street" placeholder="Ex : rue de la Paix">
+                <input type="text" id="street" placeholder="Ex : rue de la Paix" oninput="saveLastAddress()">
                 <button type="button" class="gps-inline" id="gpsBtn" onclick="fillFromGPS()" title="Utiliser ma position" aria-label="Utiliser ma position">📍</button>
               </div>
             </div>
@@ -702,7 +702,7 @@
   <script>
     // 🔖 Version du front (affichée discrètement) — permet de vérifier d'un coup d'œil
     // que le téléphone a bien rechargé la dernière version après un déploiement.
-    const APP_VERSION = '2026-10-11.13';
+    const APP_VERSION = '2026-11-12.14';
     const INTERACTIONS = [
       { id: 'pas-reponse', label: '📬 Pas de réponse' },
       { id: 'sympa', label: '😊 Sympathique' },
@@ -985,7 +985,11 @@
         if (r.ok) { const d = await r.json(); state.actionName = d.action.name; document.getElementById('actionBarName').innerHTML = '<span class="dot">●</span> ' + esc(d.action.name); }
       } catch(e) {}
       state.selectedInteraction = null;
-      ['floor','doorNumber','streetNumber','street','team','details'].forEach(id => { const el = document.getElementById(id); if (el) el.value=''; });
+      // 📌 On ne vide PAS la rue : elle est restaurée depuis la dernière saisie
+      // (un rechargement de la PWA ne doit pas faire perdre l'adresse en cours,
+      // ni la remplacer par la position GPS courante).
+      ['floor','doorNumber','team','details'].forEach(id => { const el = document.getElementById(id); if (el) el.value=''; });
+      restoreLastAddress();
       hideStatus(); renderInteractions(); updateCounter();
       updateSyncBadge();
       maybeAutoGps(); // 📍 pré-remplissage silencieux si l'autorisation est déjà accordée
@@ -1069,11 +1073,39 @@
     // la saisie manuelle reste pleinement disponible.
     // 📍 Auto-remplissage GPS silencieux : uniquement si l'autorisation est DÉJÀ accordée
     // (aucun prompt automatique). Sinon le militant utilise l'icône 📍 à la demande.
+    // 📌 Dernière adresse saisie (n° + rue), mémorisée localement.
+    // Motif : après un enregistrement, un rechargement de la PWA (mise à jour du
+    // service worker, retour au premier plan, réouverture de l'appli) ne doit PAS
+    // perdre la rue en cours ni la remplacer par la position GPS courante.
+    const LAST_ADDR_KEY = 'pap_last_addr';
+    function saveLastAddress() {
+      const numEl = document.getElementById('streetNumber');
+      const streetEl = document.getElementById('street');
+      if (!numEl || !streetEl) return;
+      const num = numEl.value.trim(), street = streetEl.value.trim();
+      if (!num && !street) return;
+      try { localStorage.setItem(LAST_ADDR_KEY, JSON.stringify({ num, street })); } catch (e) {}
+    }
+    function loadLastAddress() {
+      try { return JSON.parse(localStorage.getItem(LAST_ADDR_KEY) || 'null'); } catch (e) { return null; }
+    }
+    function restoreLastAddress() {
+      const a = loadLastAddress();
+      if (!a) return false;
+      const numEl = document.getElementById('streetNumber');
+      const streetEl = document.getElementById('street');
+      if (numEl && a.num) numEl.value = a.num;
+      if (streetEl && a.street) streetEl.value = a.street;
+      return !!(a.num || a.street);
+    }
+
     function maybeAutoGps() {
       if (state.role !== 'participant') return;
       if (!('geolocation' in navigator) || !navigator.permissions) return;
       const streetEl = document.getElementById('street');
       if (!streetEl || streetEl.value.trim()) return;
+      // 📌 Une adresse a déjà été saisie sur le terrain → le GPS ne doit PAS la remplacer.
+      if (loadLastAddress()) return;
       try {
         navigator.permissions.query({ name: 'geolocation' }).then((p) => {
           if (p.state === 'granted') fillFromGPS();
@@ -1141,6 +1173,7 @@
       // 🔌 OFFLINE-FIRST : on écrit LOCALEMENT d'abord → la porte n'est jamais perdue,
       // même si le réseau tombe (cave, cage d'escalier). Le formulaire n'est jamais bloqué.
       enqueueDoor(payload);
+      saveLastAddress();
       clearFormKeepStreet();
       if (navigator.onLine) {
         showStatus('success', '✅ Porte enregistrée !');
